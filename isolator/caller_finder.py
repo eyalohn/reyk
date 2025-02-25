@@ -1,31 +1,41 @@
-import inspect
+from collections.abc import Iterator
+import sys
 from pathlib import Path
 
 
 MY_PACKAGE = Path(__file__).parent
 
 
-def get_caller() -> inspect.FrameInfo:
-    stack: list[inspect.FrameInfo] = inspect.stack()
-    caller_to_get_caller: inspect.FrameInfo | None = None
-    for frame in stack:
-        if frame.filename.startswith("<"):
+def get_caller_path() -> Path:
+    caller_to_get_caller_filename: str | None = None
+    for filename in _iterate_over_stack_filenames():
+        if filename.startswith("<"):
             # builtin
             continue
         
-        if Path(frame.filename).stem == "caller_finder":
+        if Path(filename).stem == "caller_finder":
             # This function
             continue
 
-        if caller_to_get_caller is None or caller_to_get_caller.filename == frame.filename:
-            caller_to_get_caller = frame
+        if caller_to_get_caller_filename is None or caller_to_get_caller_filename == filename:
+            caller_to_get_caller_filename = filename
             continue
 
-        return frame
+        return Path(filename)
     
-    raise ValueError(f"Failed to find caller outside builtin: {stack=}")
+    raise ValueError("Failed to find caller outside builtin")
 
 
-def get_caller_dir_name() -> str:
-    caller_frame = get_caller()
-    return Path(caller_frame.filename).parent.name
+def _iterate_over_stack_filenames() -> Iterator[str]:
+    current_frame = sys._getframe(1)
+    while current_frame is not None:
+        yield current_frame.f_code.co_filename
+        current_frame = current_frame.f_back
+
+
+def is_caller_part_of_library(library_name: str) -> bool:
+    caller_path = get_caller_path()
+    return any(
+        parent.name == library_name
+        for parent in caller_path.parents
+    )

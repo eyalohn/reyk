@@ -1,10 +1,11 @@
-from pathlib import Path
+import pytest
+
 from tester_get_caller import call_get_caller
 
 
 def test_get_caller() -> None:
     caller = call_get_caller()
-    assert Path(caller.filename).stem == "test_isolator"
+    assert caller.stem == "test_isolator"
 
 
 def test_import_my_package() -> None:
@@ -26,7 +27,6 @@ def test_speak_in_venv() -> None:
     import my_other_package
     output = "This is inside my package"
     assert my_other_package.speak_my_package() == output
-
 
 
 import my_other_package

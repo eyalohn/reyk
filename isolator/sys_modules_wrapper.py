@@ -1,8 +1,9 @@
 from typing import Any
-import functools
+from types import ModuleType
+from isolator.caller_finder import is_caller_part_of_library
 
 
-class SysModulesWrapper(dict):
+class SysModulesWrapper(dict[str, ModuleType]):
     """
     The sys.modules attribute contains cached modules.
     When we import a package that then imports a vendorized package - the sys modules
@@ -18,15 +19,34 @@ class SysModulesWrapper(dict):
     To mitigate this we create a wrapper around `sys.modules` which will include a different
     result based on the call stack.
     """
-    def __init__(self, package_name: str, vendorized_libs_dir_name: str) -> None:
-        self._package_name = package_name
-        self._vendorized_libs_dir_name = vendorized_libs_dir_name
-        self._library_modules = {}
-        self._user_modules = {}
+    def __init__(self, original_sys_modules: dict[str, ModuleType], library_name: str) -> None:
+        self._original_sys_modules = original_sys_modules
+        self._library_name = library_name
+        self._library_modules: dict[str, ModuleType] = {}
+        self._user_modules: dict[str, ModuleType] = original_sys_modules.copy()
     
+    def __setitem__(self, key: str, value: ModuleType) -> None:
+        return getattr(self, "__setitem__")(key, value)
+    
+    def __getitem__(self, key: str) -> ModuleType:
+        return getattr(self, "__getitem__")(key)
+    
+    def __delitem__(self, key: str) -> None:
+        return getattr(self, "__contains__")(key)
+    
+    def __contains__(self, key: object) -> bool:
+        return getattr(self, "__contains__")(key)
+    
+    def __len__(self) -> int:
+        return getattr(self, "__len__")()
+
     def __getattribute__(self, name: str) -> Any:
-        if name in ("_library_modules", "_user_modules"):
+        if name in ("_library_name", "_library_modules", "_user_modules"):
             return super().__getattribute__(name)
 
-        
-        return 
+        if is_caller_part_of_library(self._library_name):
+            print("inside lib")
+            return getattr(self._library_modules, name)
+
+        print("outside lib")
+        return getattr(self._user_modules, name)

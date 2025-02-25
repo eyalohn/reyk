@@ -1,11 +1,11 @@
 import sys
-from typing import Sequence
+from collections.abc import Sequence
 from types import ModuleType
 from pathlib import Path
 from importlib.abc import MetaPathFinder, Loader
 from importlib.machinery import ModuleSpec
 from importlib.util import module_from_spec
-from isolator.caller_finder import get_caller
+from isolator.caller_finder import is_caller_part_of_library
 
 
 class VendorImporterModuleSpec(ModuleSpec):
@@ -21,11 +21,13 @@ class VendorImporter(MetaPathFinder, Loader):
         self._vendorized_libs_dir_name = vendorized_libs_dir_name
 
     def find_spec(self, fullname: str, path: Sequence[str] | None, target: ModuleType | None = None) -> ModuleSpec | None:
+        print(f"Importing: {fullname}")
         if fullname.startswith(self.vendor_prefix):
             # Cannot import actual path - another metapath finder should do that
             return None
 
-        if not self._is_caller_part_of_library():
+        if not is_caller_part_of_library(self._library_name):
+            print(f"Importing: {fullname} - not part of lib")
             return None
 
         return VendorImporterModuleSpec(loader=self, fullname=fullname, path=path, target=target)
@@ -34,6 +36,7 @@ class VendorImporter(MetaPathFinder, Loader):
         # Caller must be part of library if this is called
         assert isinstance(spec, VendorImporterModuleSpec), "Spec must be from VendorImporter!"
         vendored_import_path = f"{self.vendor_prefix}.{spec.name}"
+        print(f"Trying to import: {spec.name=} {vendored_import_path=}")
         module = __import__(vendored_import_path, fromlist=[spec.name.split(".")[0]])
 
         if module is None:
@@ -65,18 +68,15 @@ class VendorImporter(MetaPathFinder, Loader):
         # Nothing to execute in module
         pass
 
-    def _is_caller_part_of_library(self) -> bool:
-        caller = get_caller()
-        path = Path(caller.filename)
-        return any(
-            parent.name == self._library_name
-            for parent in path.parents
-        )
-    
     @property
     def vendor_prefix(self) -> str:
         return f"{self._library_name}.{self._vendorized_libs_dir_name}"
     
     def install(self) -> None:
+        for finder in sys.meta_path:
+            invalidate_caches = getattr(finder, "invalidate_caches", None)
+            if invalidate_caches is not None:
+                invalidate_caches()
+
         if self not in sys.meta_path:
             sys.meta_path.insert(0, self)
