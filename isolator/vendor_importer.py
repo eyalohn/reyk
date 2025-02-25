@@ -19,11 +19,10 @@ class VendorImporter(MetaPathFinder, Loader):
     def __init__(self, package_name: str, vendorized_libs_dir_name: str) -> None:
         self._library_name = package_name
         self._vendorized_libs_dir_name = vendorized_libs_dir_name
-        # To avoid recursion because we try to import in create_module
-        self._is_importing: bool = False
 
     def find_spec(self, fullname: str, path: Sequence[str] | None, target: ModuleType | None = None) -> ModuleSpec | None:
-        if self._is_importing:
+        if fullname.startswith(self.vendor_prefix):
+            # Cannot import actual path - another metapath finder should do that
             return None
 
         if not self._is_caller_part_of_library():
@@ -34,12 +33,8 @@ class VendorImporter(MetaPathFinder, Loader):
     def create_module(self, spec: ModuleSpec) -> ModuleType | None:
         # Caller must be part of library if this is called
         assert isinstance(spec, VendorImporterModuleSpec), "Spec must be from VendorImporter!"
-        vendored_import_path = f"{self._library_name}.{self._vendorized_libs_dir_name}.{spec.name}"
-        self._is_importing = True
-        try:
-            module = __import__(vendored_import_path, fromlist=[spec.name.split(".")[0]])
-        finally:
-            self._is_importing = False
+        vendored_import_path = f"{self.vendor_prefix}.{spec.name}"
+        module = __import__(vendored_import_path, fromlist=[spec.name.split(".")[0]])
 
         if module is None:
             return None
@@ -77,6 +72,10 @@ class VendorImporter(MetaPathFinder, Loader):
             parent.name == self._library_name
             for parent in path.parents
         )
+    
+    @property
+    def vendor_prefix(self) -> str:
+        return f"{self._library_name}.{self._vendorized_libs_dir_name}"
     
     def install(self) -> None:
         if self not in sys.meta_path:
