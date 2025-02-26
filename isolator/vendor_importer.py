@@ -9,10 +9,9 @@ from isolator.caller_finder import is_caller_part_of_library
 
 
 class VendorImporterModuleSpec(ModuleSpec):
-    def __init__(self, loader: "VendorImporter", fullname: str, path: Sequence[str] | None, target: ModuleType | None = None) -> None:
+    def __init__(self, loader: "VendorImporter", fullname: str, module: ModuleType):
         super().__init__(fullname, loader)
-        self.path = path
-        self.target = target
+        self.module = module
 
 
 class VendorImporter(MetaPathFinder, Loader):
@@ -21,49 +20,32 @@ class VendorImporter(MetaPathFinder, Loader):
         self._vendorized_libs_dir_name = vendorized_libs_dir_name
 
     def find_spec(self, fullname: str, path: Sequence[str] | None, target: ModuleType | None = None) -> ModuleSpec | None:
-        print(f"Importing: {fullname}")
+        print(f"Importing in find_spec: {fullname}")
         if fullname.startswith(self.vendor_prefix):
             # Cannot import actual path - another metapath finder should do that
+            print("Cannot import because it starts with vendor prefix (full import)")
             return None
 
         if not is_caller_part_of_library(self._library_name):
-            print(f"Importing: {fullname} - not part of lib")
+            print("Cannot import because it's not part of library")
             return None
 
-        return VendorImporterModuleSpec(loader=self, fullname=fullname, path=path, target=target)
+        try:
+            vendored_import_path = f"{self.vendor_prefix}.{fullname}"
+            print(f"Importing: {vendored_import_path}")
+            module = __import__(vendored_import_path, fromlist=[fullname.split(".")[0]])
+        except ModuleNotFoundError:
+            print(f"Failed to import: {fullname}")
+            return None
+
+        print(f"Imported: {module}")
+        return VendorImporterModuleSpec(loader=self, fullname=fullname, module=module)
     
     def create_module(self, spec: ModuleSpec) -> ModuleType | None:
         # Caller must be part of library if this is called
         assert isinstance(spec, VendorImporterModuleSpec), "Spec must be from VendorImporter!"
-        vendored_import_path = f"{self.vendor_prefix}.{spec.name}"
-        print(f"Trying to import: {spec.name=} {vendored_import_path=}")
-        module = __import__(vendored_import_path, fromlist=[spec.name.split(".")[0]])
-
-        if module is None:
-            return None
-        # mysterious hack:
-        # Remove the reference to the extant package/module
-        # on later Python versions to cause relative imports
-        # in the vendor package to resolve the same modules
-        # as those going through this importer.
-        if sys.version_info >= (3, 4):
-            del sys.modules[vendored_import_path]
-        
-        return module
+        return spec.module
     
-    def _try_import_with_other_finders(self, vendored_import_path: str, spec: VendorImporterModuleSpec) -> ModuleType | None:
-        for finder in sys.meta_path:
-            if finder is self:
-                continue
-            
-            other_finder_spec = finder.find_spec(vendored_import_path, spec.path, spec.target)
-            if other_finder_spec is None:
-                continue
-            
-            return module_from_spec(other_finder_spec)
-        
-        return None
-
     def exec_module(self, module: ModuleType) -> None:
         # Nothing to execute in module
         pass
@@ -73,10 +55,5 @@ class VendorImporter(MetaPathFinder, Loader):
         return f"{self._library_name}.{self._vendorized_libs_dir_name}"
     
     def install(self) -> None:
-        for finder in sys.meta_path:
-            invalidate_caches = getattr(finder, "invalidate_caches", None)
-            if invalidate_caches is not None:
-                invalidate_caches()
-
         if self not in sys.meta_path:
             sys.meta_path.insert(0, self)

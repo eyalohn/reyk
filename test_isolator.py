@@ -1,3 +1,8 @@
+# For debugging
+import builtins
+import importlib
+print(builtins.__import__)
+
 import pytest
 
 from tester_get_caller import call_get_caller
@@ -27,6 +32,3 @@ def test_speak_in_venv() -> None:
     import my_other_package
     output = "This is inside my package"
     assert my_other_package.speak_my_package() == output
-
-
-import my_other_package
