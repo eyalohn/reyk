@@ -45,8 +45,6 @@ class SysModulesWrapper(dict[str, ModuleType]):
             return super().__getattribute__(name)
 
         if is_caller_part_of_library(self._library_name):
-            print("inside lib")
             return getattr(self._library_modules, name)
 
-        print("outside lib")
         return getattr(self._user_modules, name)

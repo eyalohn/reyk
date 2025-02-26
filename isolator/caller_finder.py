@@ -1,8 +1,10 @@
-from collections.abc import Iterator
 import sys
+import logging
+from collections.abc import Iterator
 from pathlib import Path
 
 
+LOGGER = logging.getLogger(__name__)
 MY_PACKAGE = Path(__file__).parent
 
 
@@ -35,6 +37,7 @@ def _iterate_over_stack_filenames() -> Iterator[str]:
 
 def is_caller_part_of_library(library_name: str) -> bool:
     caller_path = get_caller_path()
+    LOGGER.debug(f"Checking if: {library_name} is part of library...")
     return any(
         parent.name == library_name
         for parent in caller_path.parents
