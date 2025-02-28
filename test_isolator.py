@@ -1,8 +1,14 @@
 import sys
 from collections.abc import Iterator
-import pytest
 
-from tester_get_caller import call_get_caller
+import pytest
+from isolator.caller_finder import get_caller_path_outside_pyisolate
+
+
+@pytest.fixture(scope="session", autouse=True)
+def set_max_recursion_depth() -> None:
+    # Speed up tests in case of recursion errors:
+    sys.setrecursionlimit(200)
 
 
 @pytest.fixture(autouse=True)
@@ -14,7 +20,7 @@ def cleanup_modules() -> Iterator:
 
 
 def test_get_caller() -> None:
-    caller = call_get_caller()
+    caller = get_caller_path_outside_pyisolate()
     assert caller.stem == "test_isolator"
 
 
@@ -55,6 +61,22 @@ def test_another_package_import() -> None:
     assert my_other_package.another_package.ANOTHER_PACKAGE_VALUE == 0xABCD
 
 
+def test_absolute_import() -> None:
+    import my_other_package
+    assert my_other_package.my_other_package.absolute_import_me.ABSOLUTE_IMPORT_ME == 0xAAAA
+
+
+def test_from_import() -> None:
+    import my_other_package
+    assert my_other_package.from_import_me.FROM_IMPORT_ME == 0xBBBB
+
+
 def test_relative_import() -> None:
     import my_other_package
     assert my_other_package.relative_import_me.RELATIVE_IMPORT_VALUE == 0xEFEF
+
+
+sys.setrecursionlimit(500)
+import logging
+logging.basicConfig(level=logging.DEBUG)
+import my_other_package

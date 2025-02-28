@@ -9,7 +9,7 @@
             "type": "debugpy",
             "request": "launch",
             "module": "test_isolator",
-            "justMyCode": false
+            "justMyCode": false,
         }
     ]
 }

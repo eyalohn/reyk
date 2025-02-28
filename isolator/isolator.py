@@ -1,18 +1,31 @@
 import sys
 import builtins
 import importlib
-from isolator.caller_finder import get_caller_path
+import logging
+from pathlib import Path
+from isolator.caller_finder import get_caller_path_outside_pyisolate
 from isolator.vendor_importer import VendorImporter, invalidate_all_finder_caches
 from isolator.sys_modules_wrapper import SysModulesWrapper
 
 
-def isolate_library(library_name: str | None = None, vendorized_libs_dir_name: str = "_vendor") -> None:
-    if library_name is None:
-        library_name = get_caller_path().parent.name
+LOGGER = logging.getLogger(__name__)
 
+
+def isolate_library(library_path: Path | None = None, vendorized_libs_dir_name: str = "_vendor") -> None:
+    if library_path is None:
+        library_path = get_caller_path_outside_pyisolate().parent
+
+    library_name = library_path.name
+    vendorized_libs_path = library_path / vendorized_libs_dir_name
+    LOGGER.debug(f"Isolating library: {library_name} ({vendorized_libs_dir_name=})")
     sys.modules = SysModulesWrapper(sys.modules, library_name)
     invalidate_all_finder_caches()
-    VendorImporter(library_name, vendorized_libs_dir_name).install()
+    VendorImporter(library_name, vendorized_libs_dir_name, vendorized_libs_path).install()
 
     # Cannot use C-implementation as it doesn't use the same sys-modules
-    builtins.__import__ = importlib.__import__
+    def debug_import(name, globals=None, locals=None, fromlist=(), level=0):
+        LOGGER.debug(f"DEBUG IMPORT: {name} {fromlist} {level}")
+        return importlib.__import__(name, globals, locals, fromlist, level)
+    
+    builtins.__import__ = debug_import
+    # builtins.__import__ = importlib.__import__

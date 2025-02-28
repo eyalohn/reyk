@@ -8,24 +8,22 @@ LOGGER = logging.getLogger(__name__)
 MY_PACKAGE = Path(__file__).parent
 
 
-def get_caller_path() -> Path:
-    caller_to_get_caller_filename: str | None = None
+def get_caller_path_outside_pyisolate() -> Path:
     for filename in _iterate_over_stack_filenames():
-        if filename.startswith("<"):
-            # builtin
-            continue
         
-        if Path(filename).stem == "caller_finder":
+        if MY_PACKAGE in Path(filename).parents:
             # This function
-            continue
-
-        if caller_to_get_caller_filename is None or caller_to_get_caller_filename == filename:
-            caller_to_get_caller_filename = filename
             continue
 
         return Path(filename)
     
     raise ValueError("Failed to find caller outside builtin")
+
+
+def _is_python_lib(filename: str) -> bool:
+    if filename.startswith("<"):
+        # frozen builtin
+        continue
 
 
 def _iterate_over_stack_filenames() -> Iterator[str]:
@@ -36,8 +34,7 @@ def _iterate_over_stack_filenames() -> Iterator[str]:
 
 
 def is_caller_part_of_library(library_name: str) -> bool:
-    caller_path = get_caller_path()
-    LOGGER.debug(f"Checking if: {library_name} is part of library...")
+    caller_path = get_caller_path_outside_pyisolate()
     return any(
         parent.name == library_name
         for parent in caller_path.parents

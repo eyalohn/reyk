@@ -1,8 +1,10 @@
 import sys
-from collections.abc import Sequence
+from collections.abc import Sequence, Iterable
 from types import ModuleType
+from pathlib import Path
 import logging
 from importlib.abc import MetaPathFinder, Loader
+from importlib.metadata import Distribution, DistributionFinder, MetadataPathFinder
 from importlib.machinery import ModuleSpec
 from isolator.caller_finder import is_caller_part_of_library
 
@@ -16,16 +18,26 @@ class VendorImporterModuleSpec(ModuleSpec):
         self.module = module
 
 
-class VendorImporter(MetaPathFinder, Loader):
-    def __init__(self, package_name: str, vendorized_libs_dir_name: str) -> None:
+class VendorImporter(DistributionFinder, MetaPathFinder, Loader):
+    def __init__(
+        self,
+        package_name: str,
+        vendorized_libs_dir_name: str,
+        vendorized_libs_path: Path,
+    ) -> None:
         self._library_name = package_name
         self._vendorized_libs_dir_name = vendorized_libs_dir_name
+        self._vendorized_libs_path = vendorized_libs_path
 
     def find_spec(self, fullname: str, path: Sequence[str] | None, target: ModuleType | None = None) -> ModuleSpec | None:
         LOGGER.debug(f"Importing in vendorized find_spec: {fullname}")
         if fullname.startswith(self.vendor_prefix):
             # Cannot import actual path - another metapath finder should do that
             LOGGER.debug("Cannot import because it starts with vendor prefix (full import)")
+            return None
+        
+        if fullname == self._library_name:
+            LOGGER.debug(f"Cannot re-import the library: {self._library_name}")
             return None
 
         if not is_caller_part_of_library(self._library_name):
@@ -36,17 +48,10 @@ class VendorImporter(MetaPathFinder, Loader):
         try:
             LOGGER.debug(f"Importing: {vendored_import_path}")
             module = __import__(vendored_import_path, fromlist=[fullname.split(".")[0]])
-        except ModuleNotFoundError:
-            LOGGER.debug(f"Failed to import: {fullname}")
+        except ModuleNotFoundError as exc:
+            LOGGER.debug(f"Failed to import: {fullname}: {exc!s}")
             return None
 
-        # mysterious hack:
-        # Remove the reference to the extant package/module
-        # on later Python versions to cause relative imports
-        # in the vendor package to resolve the same modules
-        # as those going through this importer.
-        if sys.version_info > (3, 3):
-            del sys.modules[vendored_import_path]
         LOGGER.debug(f"Imported: {module}")
         return VendorImporterModuleSpec(loader=self, fullname=fullname, module=module)
     
@@ -58,6 +63,24 @@ class VendorImporter(MetaPathFinder, Loader):
     def exec_module(self, module: ModuleType) -> None:
         # Nothing to execute in module
         pass
+    
+    def find_distributions(
+        self,
+        context: DistributionFinder.Context = DistributionFinder.Context()
+    ) -> Iterable[Distribution]:
+        LOGGER.debug(f"Finding distributions in VendorImporter for context: {context}")
+        if not is_caller_part_of_library(self._library_name):
+            from isolator.caller_finder import get_caller_path_outside_pyisolate, _iterate_over_stack
+            x = get_caller_path_outside_pyisolate()
+            y = list(_iterate_over_stack())
+            print(x)
+            print(y)
+            LOGGER.debug("Returning empty list in find_distributions because not part of library")
+            return []
+
+        LOGGER.debug(f"Returning all distributions in vendorized path: {self._vendorized_libs_path}")
+        vars(context).update({"path": [str(self._vendorized_libs_path)]})
+        return MetadataPathFinder.find_distributions(context)
 
     @property
     def vendor_prefix(self) -> str:

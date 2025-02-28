@@ -22,8 +22,8 @@ class SysModulesWrapper(dict[str, ModuleType]):
     def __init__(self, original_sys_modules: dict[str, ModuleType], library_name: str) -> None:
         self._original_sys_modules = original_sys_modules
         self._library_name = library_name
-        self._library_modules: dict[str, ModuleType] = {}
-        self._user_modules: dict[str, ModuleType] = original_sys_modules.copy()
+        self._library_modules: dict[str, ModuleType] = original_sys_modules
+        self._user_modules: dict[str, ModuleType] = original_sys_modules
     
     def __setitem__(self, key: str, value: ModuleType) -> None:
         return getattr(self, "__setitem__")(key, value)
@@ -39,6 +39,12 @@ class SysModulesWrapper(dict[str, ModuleType]):
     
     def __len__(self) -> int:
         return getattr(self, "__len__")()
+    
+    def __str__(self) -> str:
+        return getattr(self, "__str__")()
+    
+    def __repr__(self) -> str:
+        return getattr(self, "__repr__")()
 
     def __getattribute__(self, name: str) -> Any:
         if name in ("_library_name", "_library_modules", "_user_modules"):
