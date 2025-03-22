@@ -2,7 +2,7 @@ import sys
 from collections.abc import Iterator
 
 import pytest
-from isolator.caller_finder import get_caller_path_outside_pyisolate
+from isolator.caller_finder import get_caller_frame_outside_pyisolate
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -20,8 +20,8 @@ def cleanup_modules() -> Iterator:
 
 
 def test_get_caller() -> None:
-    caller = get_caller_path_outside_pyisolate()
-    assert caller.stem == "test_isolator"
+    caller = get_caller_frame_outside_pyisolate()
+    assert caller.module_name == "test_isolator"
 
 
 def test_import_my_package() -> None:

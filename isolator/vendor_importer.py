@@ -45,15 +45,26 @@ class VendorImporter(DistributionFinder, MetaPathFinder, Loader):
             return None
 
         vendored_import_path = f"{self.vendor_prefix}.{fullname}"
+        # if "." in fullname:
+        #     imported_name, package = fullname.rsplit(".", maxsplit=1)
+        #     vendored_import_path += f".{package}"
+        # else:
+        #     imported_name = fullname
+        #     vendored_import_path += f".{imported_name}"
+
         try:
             LOGGER.debug(f"Importing: {vendored_import_path}")
-            module = __import__(vendored_import_path, fromlist=[fullname.split(".")[0]])
+            module = __import__(vendored_import_path, fromlist=[fullname.split(".", 1)[0]])
         except ModuleNotFoundError as exc:
             LOGGER.debug(f"Failed to import: {fullname}: {exc!s}")
             return None
 
+        # sys modules is different if in library and if not therefore it's okay to add the imported
+        # module name to the sys modules even though it might be common between user and library
+        sys.modules[vendored_import_path] = module
+        sys.modules[fullname] = module
         LOGGER.debug(f"Imported: {module}")
-        return VendorImporterModuleSpec(loader=self, fullname=fullname, module=module)
+        return module
     
     def create_module(self, spec: ModuleSpec) -> ModuleType | None:
         # Caller must be part of library if this is called
@@ -70,11 +81,6 @@ class VendorImporter(DistributionFinder, MetaPathFinder, Loader):
     ) -> Iterable[Distribution]:
         LOGGER.debug(f"Finding distributions in VendorImporter for context: {context}")
         if not is_caller_part_of_library(self._library_name):
-            from isolator.caller_finder import get_caller_path_outside_pyisolate, _iterate_over_stack
-            x = get_caller_path_outside_pyisolate()
-            y = list(_iterate_over_stack())
-            print(x)
-            print(y)
             LOGGER.debug("Returning empty list in find_distributions because not part of library")
             return []
 
