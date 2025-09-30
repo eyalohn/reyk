@@ -22,3 +22,11 @@ def files_manager() -> Iterable[ExampleProjectFileManager]:
         yield files_manager
     finally:
         files_manager.cleanup_files()
+
+
+@pytest.fixture(autouse=True)
+def clear_imported_modules_cache() -> Iterable[None]:
+    imported_modules_before_test = sys.modules.copy()
+    yield
+    sys.modules.clear()
+    sys.modules.update(imported_modules_before_test)
