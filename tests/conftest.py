@@ -11,7 +11,7 @@ def set_max_recursion_depth() -> None:
 
 
 @pytest.fixture(autouse=True)
-def cleanup_modules() -> Iterable:
+def cleanup_modules() -> Iterable[None]:
     original = sys.modules.copy()
     yield
     sys.modules.clear()

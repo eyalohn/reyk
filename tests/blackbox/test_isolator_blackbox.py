@@ -1,6 +1,7 @@
 from pathlib import Path
+import sys
 import pytest
-from tests.blackbox.files_manager import ExampleProjectFileManager
+from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 from tests.blackbox.variable_access_statement_generator import (
     generate_variable_access_statement_params,
     ALL_IMPORT_TECHNIQUES_BUT_RELATIVE,
@@ -227,22 +228,20 @@ def test_file_attribute_correct(files_manager: ExampleProjectFileManager) -> Non
     assert Path(MY_FILE_PATH) == expected_module_path
 
 
-# def test_import_same_name_library() -> None:
-#     files_manager.create_library_module(
-#         library_name="pytest",
-#         module_name="__init__",
-#         content=MY_STRING_DECLARATION_MODULE,
-#     )
-#     files_manager.create_library_module(
-#         library_name="another_library",
-#         module_name="another_module",
-#         content=MY_STRING_DECLARATION_MODULE,
-#     )
-#     files_manager.create_project_module(
-#         module_name="module",
-#         content=f"from example_library.library_module import {MY_STRING_NAME}"
-#     )
-#     _assert_my_string_in_module()
+def test_import_same_name_library(files_manager: ExampleProjectFileManager) -> None:
+    sys.modules.pop("pytest")
+    files_manager.create_library_module(
+        library_name="pytest",
+        module_name="__init__",
+        content=MY_STRING_DECLARATION_MODULE,
+    )
+    files_manager.create_project_module(
+        module_name="module",
+        content=f"from pytest import {MY_STRING_NAME}"
+    )
+    _assert_my_string_in_module()
+    import pytest
+    assert not hasattr(pytest, MY_STRING_NAME)
 
 
 def _assert_my_string_in_module() -> None:

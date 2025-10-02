@@ -46,10 +46,8 @@ class SysModulesWrapper(dict[str, ModuleType]):
             while f:
                 frames.append(f)
                 f = f.f_back
-            print(f"Getting key: {key} {default} {lib} from ")
         if lib:
             val = self._library_modules.get(key, default)
-            print(f"Returned user module: {val}")
             return val
 
         return self._user_modules.get(key, default)
@@ -83,7 +81,6 @@ class SysModulesWrapper(dict[str, ModuleType]):
             while f:
                 frames.append(f)
                 f = f.f_back
-            print(f"Getting attribute: {name} {lib} from {frames}")
         if lib:
             return getattr(self._library_modules, name)
 

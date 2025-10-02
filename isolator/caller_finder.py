@@ -21,12 +21,11 @@ class StackFrame:
 
 
 def get_caller_frame_outside_pyisolate() -> StackFrame:
-    s = list(_iterate_over_stack())
     for frame in _iterate_over_stack():
         if is_part_of_stdlib(frame.module_name):
             continue
         
-        if frame == MY_PACKAGE_NAME or frame.module_name.startswith(f"{MY_PACKAGE_NAME}."):
+        if frame.module_name == MY_PACKAGE_NAME or frame.module_name.startswith(f"{MY_PACKAGE_NAME}."):
             # This function
             continue
 

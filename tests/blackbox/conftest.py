@@ -3,7 +3,7 @@ from collections.abc import Iterable
 import pytest
 
 from tests.blackbox.project_paths import PROJECT_PATH, LIBRARIES_DIRECTORY_RELATIVE_PATH
-from tests.blackbox.files_manager import ExampleProjectFileManager
+from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 
 
 @pytest.fixture(scope="session", autouse=True)
