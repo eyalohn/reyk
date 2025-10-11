@@ -116,13 +116,29 @@ def test_import_library_package_from_project(variable_access_statement: str, fil
         ALL_IMPORT_TECHNIQUES_BUT_RELATIVE,
         "example_library.module",
         MY_STRING_NAME,
-    ),
+    )
 )
-def test_import_library_module_from_library(variable_access_statement: str, files_manager: ExampleProjectFileManager) -> None:
+@pytest.mark.parametrize(
+    "library_internal_import_statement",
+    [
+        pytest.param(f"from example_library.other_module import {MY_STRING_NAME}", id="From entire module"),
+        pytest.param(f"from .other_module import {MY_STRING_NAME}", id="From relative module"),
+        pytest.param(f"""
+import importlib
+other_module = importlib.import_module(".other_module", package=__package__)
+{MY_STRING_NAME} = other_module.{MY_STRING_NAME}
+""", id="From relative module with importlib"),
+    ]
+)
+def test_import_library_module_from_library(
+    variable_access_statement: str,
+    library_internal_import_statement: str,
+    files_manager: ExampleProjectFileManager,
+) -> None:
     files_manager.create_library_module(
         library_name="example_library",
         module_name="module",
-        content=f"from example_library.other_module import {MY_STRING_NAME}",
+        content=library_internal_import_statement,
     )
     files_manager.create_library_module(
         library_name="example_library",

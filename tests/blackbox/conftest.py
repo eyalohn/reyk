@@ -22,8 +22,15 @@ def files_manager() -> Iterable[ExampleProjectFileManager]:
         yield files_manager
     finally:
         files_manager.cleanup_files()
+        
+@pytest.fixture(scope="session", autouse=True)
+def import_example_project(install_project_in_path) -> None:
+    # This is crucial to happen before `clear_imported_modules_cache` as it will isolate
+    # the project every test as the `__init__` will be reloaded (as its removed from sys modules)
 
-
+    import example_project
+        
+        
 @pytest.fixture(autouse=True)
 def clear_imported_modules_cache() -> Iterable[None]:
     imported_modules_before_test = sys.modules.copy()
