@@ -168,3 +168,4 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 .venv/
+tests/blackbox/locked_files_pending_deletion/

@@ -1,3 +1,3 @@
-from isolator.isolator import isolate_library
+from isolator.isolator import isolate_package
 
-isolate_library()
+isolate_package()
