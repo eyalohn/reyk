@@ -59,6 +59,7 @@ class VendorImporter(DistributionFinder):
         fromlist: Sequence[str] | None = (),
         level: int = 0,
     ) -> types.ModuleType:
+        # Note: ALL import calls should be in this function as to not increase the call stack significantly
         LOGGER.debug(f"Importing in vendorized find_spec: {name}")
         if not self._should_import_vendorized(name):
             return self._original_builtins_import_method(name, globals, locals, fromlist, level)
@@ -75,9 +76,29 @@ class VendorImporter(DistributionFinder):
             imported_vendorized = False
             
         if imported_vendorized and (fromlist is None or len(fromlist) == 0):
-            module = self._get_actual_imported_module(vendorized_module=module, originally_imported_name=name)
+            # module = self._get_actual_imported_module(vendorized_module=module, originally_imported_name=name)
+            packages = self.vendor_prefix.split(".")[1:]
+            returned_module_attribute, _, _ = name.partition(".")
+            packages.append(returned_module_attribute)
 
+            actual_imported_module = module
+            for index, package in enumerate(packages):
+                actual_imported_module = getattr(actual_imported_module, package, None)
+                if actual_imported_module is None:
+                    actual_imported_module = self._original_builtins_import_method(
+                        f"{self.vendor_prefix}.{returned_module_attribute}",
+                        globals,
+                        locals,
+                        [""],
+                        level,
+                    )
+                    break
+                    # raise ModuleNotFoundError(f"No module named: '{'.'.join(packages[:index + 1])}'")
+            
+            module = actual_imported_module
+        
         LOGGER.debug(f"Imported: {module}")
+        sys.modules[name] = module
         return module
     
     def importlib_import_override(

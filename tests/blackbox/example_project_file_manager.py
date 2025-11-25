@@ -52,11 +52,11 @@ class ExampleProjectFileManager:
         return module_name.replace(".", "/") + ".py"
 
     def cleanup_files(self) -> None:
-        # for file in self._created_files:
-        #     file.unlink()
+        for file in self._created_files:
+            file.unlink()
         
-        # for directory in self._created_directories:
-        #     shutil.rmtree(directory, ignore_errors=True)
+        for directory in self._created_directories:
+            shutil.rmtree(directory, ignore_errors=True)
 
         self._created_files.clear()
         self._created_directories.clear()

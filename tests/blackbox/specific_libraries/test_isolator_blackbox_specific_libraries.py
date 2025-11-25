@@ -34,6 +34,7 @@ def install_test_libs() -> Iterable[None]:
 @pytest.mark.parametrize(
     "library_name",
     [
+        "bson",  # Has C module
         "pydantic",
         "pymongo",
         "aiormq",
@@ -42,6 +43,8 @@ def install_test_libs() -> Iterable[None]:
     ]
 )
 def test_import_library(files_manager: ExampleProjectFileManager, library_name: str) -> None:
+    import sys
+    sys.path.insert(0, str(LIBRARIES_PATH))
     files_manager.create_project_module(
         module_name="module",
         content=f"import {library_name}"

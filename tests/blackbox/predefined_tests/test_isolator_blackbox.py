@@ -182,27 +182,27 @@ def test_import_library_package_from_library(variable_access_statement: str, fil
     "variable_access_statement",
     generate_variable_access_statement_params(
         ALL_IMPORT_TECHNIQUES_BUT_RELATIVE,
-        "example_library.module",
+        "example_library",
         MY_STRING_NAME,
     ),
 )
-def test_import_library_module_from_library_package(variable_access_statement: str, files_manager: ExampleProjectFileManager) -> None:
+def test_import_recursive_library_module_in_init(variable_access_statement: str, files_manager: ExampleProjectFileManager) -> None:
     files_manager.create_library_module(
         library_name="example_library",
-        module_name="module",
-        content=f"from example_library.example_package import {MY_STRING_NAME}"
+        module_name="__init__",
+        content=f"from example_library.first_module import {MY_STRING_NAME}"
     )
     files_manager.create_library_module(
         library_name="example_library",
-        module_name="example_package.__init__",
+        module_name="first_module",
         content=f"""
-import example_library.example_package.module
-{MY_STRING_NAME} = example_library.example_package.module.{MY_STRING_NAME}
+import example_library.second_module
+{MY_STRING_NAME} = example_library.second_module.{MY_STRING_NAME}
 """,
     )
     files_manager.create_library_module(
         library_name="example_library",
-        module_name="example_package.module",
+        module_name="second_module",
         content=MY_STRING_DECLARATION_MODULE,
     )
     files_manager.create_project_module(
