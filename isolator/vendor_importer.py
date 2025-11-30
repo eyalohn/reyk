@@ -69,6 +69,7 @@ class VendorImporter(DistributionFinder):
         try:
             LOGGER.debug(f"Importing: {vendorized_import_path}")
             module = self._original_builtins_import_method(vendorized_import_path, globals, locals, fromlist, level)
+            sys.modules[name] = module
             imported_vendorized = True
         except ModuleNotFoundError as exc:
             LOGGER.debug(f"Failed to import vendorized: {name}: {exc!s}")
@@ -82,7 +83,7 @@ class VendorImporter(DistributionFinder):
             packages.append(returned_module_attribute)
 
             actual_imported_module = module
-            for index, package in enumerate(packages):
+            for package in packages:
                 actual_imported_module = getattr(actual_imported_module, package, None)
                 if actual_imported_module is None:
                     actual_imported_module = self._original_builtins_import_method(
@@ -92,13 +93,20 @@ class VendorImporter(DistributionFinder):
                         [""],
                         level,
                     )
+                    sys.modules[returned_module_attribute] = actual_imported_module
+                    all_packages = name.split(".")
+                    moduled = actual_imported_module
+                    for a_index, a_package in enumerate(all_packages):
+                        if a_index == 0:
+                            continue
+                        moduled = getattr(moduled, a_package)
+                        sys.modules[".".join(all_packages[:a_index + 1])] = moduled
                     break
                     # raise ModuleNotFoundError(f"No module named: '{'.'.join(packages[:index + 1])}'")
             
             module = actual_imported_module
         
         LOGGER.debug(f"Imported: {module}")
-        sys.modules[name] = module
         return module
     
     def importlib_import_override(

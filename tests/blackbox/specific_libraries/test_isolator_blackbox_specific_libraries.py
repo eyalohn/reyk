@@ -50,3 +50,4 @@ def test_import_library(files_manager: ExampleProjectFileManager, library_name: 
         content=f"import {library_name}"
     )
     import example_project.module
+    print()
