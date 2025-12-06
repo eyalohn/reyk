@@ -2,27 +2,36 @@ import sys
 from collections.abc import Iterable
 import pytest
 
-from tests.blackbox.project_paths import PROJECT_PATH, LIBRARIES_DIRECTORY_RELATIVE_PATH
+from tests.blackbox.libraries_manager import LibrariesManager
+from tests.blackbox.project_paths import EXAMPLE_PROJECT_PATH, EXAMPLE_PROJECT_LIBRARIES_DIRECTORY_RELATIVE_PATH, TEST_LIBRARIES_DIRECTORY_PATH
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 
 
 @pytest.fixture(scope="session", autouse=True)
 def install_project_in_path() -> None:
     # Tests will be able to import as if  in the example project
-    sys.path.insert(0, str(PROJECT_PATH.parent))
+    sys.path.insert(0, str(EXAMPLE_PROJECT_PATH.parent))
 
 
 @pytest.fixture
 def files_manager() -> Iterable[ExampleProjectFileManager]:
     files_manager = ExampleProjectFileManager(
-        project_path=PROJECT_PATH,
-        libraries_dir_relative_path=LIBRARIES_DIRECTORY_RELATIVE_PATH,
+        project_path=EXAMPLE_PROJECT_PATH,
+        libraries_dir_relative_path=EXAMPLE_PROJECT_LIBRARIES_DIRECTORY_RELATIVE_PATH,
     )
     try:
         yield files_manager
     finally:
         files_manager.cleanup_files()
+
+
+@pytest.fixture
+def libraries_manager() -> Iterable[LibrariesManager]:
+    libraries_manager = LibrariesManager(TEST_LIBRARIES_DIRECTORY_PATH)
+    yield libraries_manager
+    libraries_manager.cleanup_libraries_dir()
         
+
 @pytest.fixture(scope="session", autouse=True)
 def import_example_project(install_project_in_path) -> None:
     # This is crucial to happen before `clear_imported_modules_cache` as it will isolate

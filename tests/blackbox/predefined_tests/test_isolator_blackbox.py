@@ -7,7 +7,7 @@ from tests.blackbox.predefined_tests.variable_access_statement_generator import 
     ALL_IMPORT_TECHNIQUES_BUT_RELATIVE,
     ALL_IMPORT_TECHNIQUES,
 )
-from tests.blackbox.project_paths import LIBRARIES_PATH
+from tests.blackbox.project_paths import EXAMPLE_PROJECT_LIBRARIES_PATH
 
 
 # Terminology:
@@ -261,6 +261,24 @@ def test_import_different_library_in_library(variable_access_statement: str, fil
     _assert_my_string_in_module()
 
 
+# def test_import_project_with_library_in_same_name(files_manager: ExampleProjectFileManager) -> None:
+#     files_manager.create_library_module(
+#         library_name="example_library",
+#         module_name="library_module",
+#         content=variable_access_statement,
+#     )
+#     files_manager.create_library_module(
+#         library_name="another_library",
+#         module_name="another_module",
+#         content=MY_STRING_DECLARATION_MODULE,
+#     )
+#     files_manager.create_project_module(
+#         module_name="module",
+#         content=f"from example_library.library_module import {MY_STRING_NAME}"
+#     )
+#     _assert_my_string_in_module()
+
+
 def test_file_attribute_correct(files_manager: ExampleProjectFileManager) -> None:
     library_name = "example_library"
     library_module_name = "library_module"
@@ -274,7 +292,7 @@ def test_file_attribute_correct(files_manager: ExampleProjectFileManager) -> Non
         content="from example_library.library_module import MY_FILE_PATH"
     )
     from example_project.module import MY_FILE_PATH
-    expected_module_path = (LIBRARIES_PATH / library_name / f"{library_module_name}.py")
+    expected_module_path = (EXAMPLE_PROJECT_LIBRARIES_PATH / library_name / f"{library_module_name}.py")
     assert Path(MY_FILE_PATH) == expected_module_path
 
 
