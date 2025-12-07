@@ -1,13 +1,17 @@
 import builtins
 import importlib
 import sys
-import types
+from turtle import st
+from types import ModuleType
 from typing import Protocol
 from collections.abc import Sequence, Iterable, Mapping
 from pathlib import Path
+import functools
 import logging
 from importlib.metadata import Distribution, DistributionFinder, MetadataPathFinder
 from isolator.caller_finder import is_caller_part_of_library
+from isolator.stdlib_finder import is_part_of_stdlib
+from isolator.sys_modules_state_handler import SysModulesStateHandler
 
 
 LOGGER = logging.getLogger(__name__)
@@ -23,7 +27,7 @@ class BuiltinsImporter(Protocol):
         locals: Mapping[str, object] | None = None,
         fromlist: Sequence[str] | None = (),
         level: int = 0,
-    ) -> types.ModuleType:
+    ) -> ModuleType:
         ...
 
 
@@ -32,7 +36,7 @@ class ImportLibImporter(Protocol):
         self,
         name: str,
         package: str | None = None,
-    ) -> types.ModuleType:
+    ) -> ModuleType:
         ...
 
 
@@ -50,6 +54,7 @@ class VendorImporter(DistributionFinder):
         self._vendorized_libs_path = vendorized_libs_path
         self._original_builtins_import_method = original_builtins_import_method
         self._original_importlib_import_method = original_importlib_import_method
+        self._sys_modules_state_handler = SysModulesStateHandler()
 
     def builtins_import_override(
         self,
@@ -58,54 +63,42 @@ class VendorImporter(DistributionFinder):
         locals: Mapping[str, object] | None = None,
         fromlist: Sequence[str] | None = (),
         level: int = 0,
-    ) -> types.ModuleType:
+    ) -> ModuleType:
         # Note: ALL import calls should be in this function as to not increase the call stack significantly
-        LOGGER.debug(f"Importing in vendorized find_spec: {name}")
         if not self._should_import_vendorized(name):
+            # If importing a module which shouldn't be vendorized
+            # we need to exit the context to ensure we don't retrieve
+            # a vendorized module
+            self._sys_modules_state_handler.remove_vendorized_sys_modules()
             return self._original_builtins_import_method(name, globals, locals, fromlist, level)
 
         vendorized_import_path = f"{self.vendor_prefix}.{name}"
+        self._sys_modules_state_handler.install_vendorized_sys_modules()
         imported_vendorized: bool
         try:
             LOGGER.debug(f"Importing: {vendorized_import_path}")
+            # Install vendorized modules to save us from importing the same module twice
+            # if it already exists in the sys.modules
             module = self._original_builtins_import_method(vendorized_import_path, globals, locals, fromlist, level)
-            sys.modules[name] = module
             imported_vendorized = True
         except ModuleNotFoundError as exc:
             LOGGER.debug(f"Failed to import vendorized: {name}: {exc!s}")
+            self._sys_modules_state_handler.remove_vendorized_sys_modules()
             module = self._original_builtins_import_method(name, globals, locals, fromlist, level)
             imported_vendorized = False
-            
-        if imported_vendorized and (fromlist is None or len(fromlist) == 0):
-            # module = self._get_actual_imported_module(vendorized_module=module, originally_imported_name=name)
-            packages = self.vendor_prefix.split(".")[1:]
-            returned_module_attribute, _, _ = name.partition(".")
-            packages.append(returned_module_attribute)
-
-            actual_imported_module = module
-            for package in packages:
-                actual_imported_module = getattr(actual_imported_module, package, None)
-                if actual_imported_module is None:
-                    actual_imported_module = self._original_builtins_import_method(
-                        f"{self.vendor_prefix}.{returned_module_attribute}",
-                        globals,
-                        locals,
-                        [""],
-                        level,
-                    )
-                    sys.modules[returned_module_attribute] = actual_imported_module
-                    all_packages = name.split(".")
-                    moduled = actual_imported_module
-                    for a_index, a_package in enumerate(all_packages):
-                        if a_index == 0:
-                            continue
-                        moduled = getattr(moduled, a_package)
-                        sys.modules[".".join(all_packages[:a_index + 1])] = moduled
-                    break
-                    # raise ModuleNotFoundError(f"No module named: '{'.'.join(packages[:index + 1])}'")
-            
-            module = actual_imported_module
         
+        if imported_vendorized:
+            is_absolute_import = fromlist is None or len(fromlist) == 0
+            if is_absolute_import:
+                module = self._retrieve_absolute_import_module(name, module)
+                self._add_imported_sub_modules_to_vendorized(name, module)
+            else:
+                self._sys_modules_state_handler.add_only_vendorized_module(name, module)
+
+            # It's important at the end to return to vendorized sys module if we imported
+            # a vendorized package in case an import was made inside this import which changed the state
+            self._sys_modules_state_handler.install_vendorized_sys_modules()
+
         LOGGER.debug(f"Imported: {module}")
         return module
     
@@ -113,43 +106,93 @@ class VendorImporter(DistributionFinder):
         self,
         name: str,
         package: str | None = None,
-    ) -> types.ModuleType:
+    ) -> ModuleType:
         # If package is not None it's a relative import
         if not self._should_import_vendorized(name) or package is not None:
+            self._sys_modules_state_handler.remove_vendorized_sys_modules()
             return self._original_importlib_import_method(name, package)
 
         vendorized_import_path = f"{self.vendor_prefix}.{name}"
         try:
+            self._sys_modules_state_handler.install_vendorized_sys_modules()
             return self._original_importlib_import_method(vendorized_import_path, None)
         except ModuleNotFoundError as exc:
             LOGGER.debug(f"Failed to import vendorized: {name}: {exc!s}")
+            self._sys_modules_state_handler.remove_vendorized_sys_modules()
             return self._original_importlib_import_method(name, None)
     
-    def _get_actual_imported_module(
+    def _retrieve_absolute_import_module(
         self,
-        vendorized_module: types.ModuleType,
-        originally_imported_name: str,
-    ) -> types.ModuleType:
+        module_name: str,
+        module_with_vendor_prefix: ModuleType,
+    ) -> ModuleType:
+        module_without_vendor_prefix = self._try_retrieving_imported_module_by_getattr(
+            module_name=module_name,
+            returned_module=module_with_vendor_prefix,
+        )
+        if module_without_vendor_prefix is None:
+            self._sys_modules_state_handler.install_vendorized_sys_modules()
+            returned_module_name_with_prefix = f"{self.vendor_prefix}.{self._extract_returned_module_name(module_name)}"
+            module_without_vendor_prefix = sys.modules.get(returned_module_name_with_prefix)
+            if module_without_vendor_prefix is None:
+                raise ModuleNotFoundError(f"No module named: '{returned_module_name_with_prefix}'")
+        
+        return module_without_vendor_prefix
+    
+    def _add_imported_sub_modules_to_vendorized(
+        self,
+        module_name: str,
+        returned_module: ModuleType,
+    ) -> None:
+        """
+        Adds the imported sub-packages of the returned module to the vendorized modules state.
+        For example if we perform a vendorized: `import example_library.module` then we
+        return `example_library` but in the sys modules there will only be:
+        1. `example_project.libs.example_library`
+        2. `example_project.libs.example_library.module`
+        Meanwhile this function will also add the following:
+        1. `example_library`
+        2. `example_library.module`
+        """
+        packages = module_name.split(".")
+        current_module = returned_module
+        for index, path_component in enumerate(packages):
+            if index > 0:
+                current_module = getattr(current_module, path_component)
+            current_module_name = ".".join(packages[:index + 1])
+            self._sys_modules_state_handler.add_only_vendorized_module(current_module_name, current_module)
+
+    def _try_retrieving_imported_module_by_getattr(
+        self,
+        module_name: str,
+        returned_module: ModuleType,
+    ) -> ModuleType | None:
         """
         If we perform the following from example_project:
         `import example_library.library_module`
-        This will re route us to:
+        This will reroute us to:
         `import example_project.libs.example_library.library_module`
         therefore instead of accessing the variable by using `example_library.library_module.MY_STRING`
         we have to use `example_project.libs.example_library.library_module`.
         To avoid this we have to return the `example_library` module instead of the `example_project` module.
+
+        This may fail sometimes due to circular imports not able to retrieve the object yet.
+        Ie: If you are already inside `example_library.__init__` and importing `example_library.library_module`
+        it might fail because this will try to access an attribute of a partially-initialized module.
         """
         packages = self.vendor_prefix.split(".")[1:]
-        returned_module_attribute, _, _ = originally_imported_name.partition(".")
-        packages.append(returned_module_attribute)
+        returned_module_name = self._extract_returned_module_name(module_name)
+        packages.append(returned_module_name)
 
-        actual_imported_module = vendorized_module
-        for index, package in enumerate(packages):
-            actual_imported_module = getattr(actual_imported_module, package, None)
-            if actual_imported_module is None:
-                raise ModuleNotFoundError(f"No module named: '{'.'.join(packages[:index + 1])}'")
-        
-        return actual_imported_module
+        return functools.reduce(
+            lambda module, package: getattr(module, package, None),
+            packages,
+            returned_module,
+        )
+    
+    def _extract_returned_module_name(self, module_name: str) -> str:
+        returned_module_attribute, _, _ = module_name.partition(".")
+        return returned_module_attribute
     
     def _should_import_vendorized(
         self,

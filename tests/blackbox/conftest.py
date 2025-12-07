@@ -28,7 +28,9 @@ def files_manager() -> Iterable[ExampleProjectFileManager]:
 @pytest.fixture
 def libraries_manager() -> Iterable[LibrariesManager]:
     libraries_manager = LibrariesManager(TEST_LIBRARIES_DIRECTORY_PATH)
+    libraries_manager.install_libraries_in_path()
     yield libraries_manager
+    libraries_manager.remove_libraries_from_path()
     libraries_manager.cleanup_libraries_dir()
         
 

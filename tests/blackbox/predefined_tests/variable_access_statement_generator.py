@@ -88,12 +88,34 @@ imported_module = importlib.import_module("{containing_module_import_path}")
         )
 
 
+class MimicCPythonImportStatement(VariableAccessStatementGenerator):
+    @staticmethod
+    def generate(containing_module_import_path: str, variable_name: str) -> PytestParam:
+        """
+        An import in C is usually done with `PyImport_ImportModule` which is basically short for:
+        1. Import the module you want to access for example: 'collections.abc' by using builtins.__import__
+        2. Retrieve the module from the sys modules
+        The second part is done because the first part retrieves the top-level module: for `collections.abc`
+        it will be `collections` instead of `collections.abc`.
+        """
+        return pytest.param(
+            f"""
+import sys
+__import__("{containing_module_import_path}")
+imported_module = sys.modules["{containing_module_import_path}"]
+{variable_name} = imported_module.{variable_name}
+            """,
+            id="Mimic C Import by importing then retrieving from sys modules"
+        )
+
+
 ALL_IMPORT_TECHNIQUES_BUT_RELATIVE = (
     AbsoluteImportModuleStatement,
     FromImportStatement,
     StarImportStatement,
     ImportFunctionStatement,
     ImportLibFunctionStatement,
+    MimicCPythonImportStatement,
 )
 ALL_IMPORT_TECHNIQUES = (
     *ALL_IMPORT_TECHNIQUES_BUT_RELATIVE,

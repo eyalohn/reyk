@@ -1,13 +1,7 @@
-# TODO:
-# 1. pymongo
-# 2. aiormq
-# 3. pika
-# 4. protobuf
-# 5. pydantic
-
 from pathlib import Path
 import shutil
 from collections.abc import Iterable
+from types import ModuleType
 import pytest
 from tests.blackbox.project_paths import EXAMPLE_PROJECT_LIBRARIES_PATH, LOCKED_FILES_PENDING_DELETION_PATH
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
@@ -34,17 +28,34 @@ def install_test_libs() -> Iterable[None]:
 @pytest.mark.parametrize(
     "library_name",
     [
-        "bson",  # Has C module
-        "pydantic",
-        "pymongo",
-        "aiormq",
-        "pika",
-        "google.protobuf",
+        "pydantic",  # Rust pyd
+        "aiormq",  # Lots of relative imports
+        "pika",  # Large library with lots of builtins usage
     ]
 )
 def test_import_library(files_manager: ExampleProjectFileManager, library_name: str) -> None:
+    _import_module_in_project(files_manager, library_name)
+
+
+def test_import_bson(files_manager: ExampleProjectFileManager) -> None:
+    bson = _import_module_in_project(files_manager, "bson")
+    assert bson._cbson._C_API is not None
+
+
+def test_import_pymongo(files_manager: ExampleProjectFileManager) -> None:
+    pymongo = _import_module_in_project(files_manager, "pymongo")
+    assert pymongo.has_c()
+
+
+def test_import_protobuf(files_manager: ExampleProjectFileManager) -> None:
+    google = _import_module_in_project(files_manager, "google.protobuf.internal.api_implementation")
+    assert google.protobuf.internal.api_implementation.Type() != "python"
+
+
+def _import_module_in_project(files_manager: ExampleProjectFileManager, library_name: str) -> ModuleType:
     files_manager.create_project_module(
         module_name="module",
-        content=f"import {library_name}"
+        content=f"imported_library = __import__('{library_name}')"
     )
-    import example_project.module
+    from example_project.module import imported_library
+    return imported_library
