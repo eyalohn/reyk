@@ -129,6 +129,7 @@ celerybeat.pid
 # Environments
 .env
 env/
+.venv/
 venv/
 ENV/
 env.bak/
@@ -167,5 +168,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
-.venv/
+
+# Tests
 tests/blackbox/locked_files_pending_deletion/
+
+# Docs
+.vercel
