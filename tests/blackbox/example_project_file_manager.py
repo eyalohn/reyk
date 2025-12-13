@@ -50,8 +50,15 @@ class ExampleProjectFileManager:
     
     def _convert_module_name_to_file_name(self, module_name: str) -> str:
         return module_name.replace(".", "/") + ".py"
+    
+    def remove_pycache_directories(self) -> None:
+       for pycache_directory in self._project_path.rglob("__pycache__"):
+           if pycache_directory.is_dir():
+               shutil.rmtree(pycache_directory)
 
     def cleanup_files(self) -> None:
+        self.remove_pycache_directories()
+
         for file in self._created_files:
             file.unlink()
         

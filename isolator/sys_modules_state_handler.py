@@ -34,3 +34,10 @@ class SysModulesStateHandler:
         self._vendorized_sys_modules[name] = module
         if self._are_vendorized_modules_installed:
             sys.modules[name] = module
+    
+    def clear_state(self) -> None:
+        self._previous_sys_modules.clear()
+        # Remove vendorized sys modules but don't return previous sys modules (because they're empty)
+        self.remove_vendorized_sys_modules()
+        self._vendorized_sys_modules.clear()
+        self._are_vendorized_modules_installed = False

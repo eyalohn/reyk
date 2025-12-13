@@ -2,6 +2,7 @@ import sys
 from collections.abc import Iterable
 import pytest
 
+from isolator.vendor_importer import get_installed_vendor_importer
 from tests.blackbox.libraries_manager import LibrariesManager
 from tests.blackbox.project_paths import EXAMPLE_PROJECT_PATH, EXAMPLE_PROJECT_LIBRARIES_DIRECTORY_RELATIVE_PATH, TEST_LIBRARIES_DIRECTORY_PATH
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
@@ -41,9 +42,18 @@ def import_example_project(install_project_in_path) -> None:
 
     import example_project
         
-        
+
 @pytest.fixture(autouse=True)
-def clear_imported_modules_cache() -> Iterable[None]:
+def clear_vendorized_modules_cache() -> None:
+    # Must be before `clear_sys_imported_modules_cache` because by clearing the cache
+    # it also returns the removed `sys.modules` back (returns to an unvendorized state)
+    vendor_importer = get_installed_vendor_importer()
+    if vendor_importer is not None:
+        vendor_importer.clear_vendorized_cache()
+
+
+@pytest.fixture(autouse=True)
+def clear_sys_imported_modules_cache() -> Iterable[None]:
     imported_modules_before_test = sys.modules.copy()
     yield
     sys.modules.clear()

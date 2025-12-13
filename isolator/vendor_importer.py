@@ -1,7 +1,6 @@
 import builtins
 import importlib
 import sys
-from turtle import st
 from types import ModuleType
 from typing import Protocol
 from collections.abc import Sequence, Iterable, Mapping
@@ -10,7 +9,6 @@ import functools
 import logging
 from importlib.metadata import Distribution, DistributionFinder, MetadataPathFinder
 from isolator.caller_finder import is_caller_part_of_library
-from isolator.stdlib_finder import is_part_of_stdlib
 from isolator.sys_modules_state_handler import SysModulesStateHandler
 
 
@@ -241,15 +239,25 @@ class VendorImporter(DistributionFinder):
         return f"{self._package_name}.{self._vendorized_libs_dir_name}"
     
     def install(self) -> None:
-        if self not in sys.meta_path:
-            sys.meta_path.insert(0, self)
-        
         builtins.__import__ = self.builtins_import_override
         importlib.import_module = self.importlib_import_override
+        if self not in sys.meta_path:
+            # For distribution finder
+            sys.meta_path.append(self)
+    
+    def uninstall(self) -> None:
+        builtins.__import__ = self._original_builtins_import_method
+        importlib.import_module = self._original_importlib_import_method
+        if self in sys.meta_path:
+            sys.meta_path.remove(self)
+    
+    def clear_vendorized_cache(self) -> None:
+        self._sys_modules_state_handler.clear_state()
 
 
-def invalidate_all_finder_caches() -> None:
-    for finder in sys.meta_path:
-        invalidate_caches = getattr(finder, "invalidate_caches", None)
-        if invalidate_caches is not None:
-            invalidate_caches()
+def get_installed_vendor_importer() -> VendorImporter | None:
+    import_owner = getattr(builtins.__import__, "__self__", None)
+    if (import_owner is None) or (not isinstance(import_owner, VendorImporter)):
+        return None
+    
+    return import_owner

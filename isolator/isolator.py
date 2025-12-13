@@ -4,7 +4,7 @@ import importlib
 import logging
 from pathlib import Path
 from isolator.caller_finder import get_caller_frame_outside_pyisolate
-from isolator.vendor_importer import BuiltinsImporter, VendorImporter, invalidate_all_finder_caches
+from isolator.vendor_importer import BuiltinsImporter, VendorImporter
 
 
 LOGGER = logging.getLogger(__name__)
@@ -17,8 +17,6 @@ def isolate_package(package_path: Path | None = None, vendorized_libs_dir_name: 
     package_name = package_path.name
     vendorized_libs_path = package_path / vendorized_libs_dir_name
     LOGGER.debug(f"Isolating library: {package_name} ({vendorized_libs_dir_name=})")
-    # sys.modules = SysModulesWrapper(sys.modules, library_name)
-    invalidate_all_finder_caches()
     VendorImporter(
         package_name,
         vendorized_libs_dir_name,
