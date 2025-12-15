@@ -1,3 +1,3 @@
-from pyisolator.isolator import isolate_package
+from pyisolate.isolator import isolate_package
 
 isolate_package()

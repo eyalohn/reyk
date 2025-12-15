@@ -3,8 +3,8 @@ import builtins
 import importlib
 import logging
 from pathlib import Path
-from pyisolator.caller_finder import get_caller_frame_outside_pyisolate
-from pyisolator.vendor_importer import BuiltinsImporter, VendorImporter
+from pyisolate.caller_finder import get_caller_frame_outside_pyisolate
+from pyisolate.vendor_importer import BuiltinsImporter, VendorImporter
 
 
 LOGGER = logging.getLogger(__name__)

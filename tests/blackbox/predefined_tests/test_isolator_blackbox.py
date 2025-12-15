@@ -12,7 +12,7 @@ from tests.blackbox.project_paths import EXAMPLE_PROJECT_LIBRARIES_PATH
 
 
 # Terminology:
-# Project - Isolated project that uses PyIsolator
+# Project - Isolated project that uses PyIsolate
 # Library - a library that the project uses
 
 # Note: We are able to import inside the example project because of

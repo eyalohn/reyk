@@ -3,7 +3,7 @@ import sys
 import logging
 from pathlib import Path
 from dataclasses import dataclass
-from pyisolator.stdlib_finder import is_part_of_stdlib
+from pyisolate.stdlib_finder import is_part_of_stdlib
 
 
 LOGGER = logging.getLogger(__name__)

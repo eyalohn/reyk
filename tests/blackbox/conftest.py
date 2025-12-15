@@ -2,7 +2,7 @@ import sys
 from collections.abc import Iterable
 import pytest
 
-from pyisolator.vendor_importer import get_installed_vendor_importer
+from pyisolate.vendor_importer import get_installed_vendor_importer
 from tests.blackbox.libraries_manager import LibrariesManager
 from tests.blackbox.project_paths import EXAMPLE_PROJECT_PATH, EXAMPLE_PROJECT_LIBRARIES_DIRECTORY_RELATIVE_PATH, TEST_LIBRARIES_DIRECTORY_PATH
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
