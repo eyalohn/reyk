@@ -8,8 +8,8 @@ from pathlib import Path
 import functools
 import logging
 from importlib.metadata import Distribution, DistributionFinder, MetadataPathFinder
-from isolator.caller_finder import is_caller_part_of_library
-from isolator.sys_modules_state_handler import SysModulesStateHandler
+from pyisolator.caller_finder import is_caller_part_of_library
+from pyisolator.sys_modules_state_handler import SysModulesStateHandler
 
 
 LOGGER = logging.getLogger(__name__)
