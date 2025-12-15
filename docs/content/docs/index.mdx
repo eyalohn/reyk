@@ -1,0 +1,13 @@
+---
+title: Welcome to PyIsolate
+---
+
+PyIsolate is an open-source tool that lets code inside your package import vendored libraries while code outside your package keeps using the system/global versions.
+
+It does this by installing a tiny import hook that transparently reroutes imports originating from within your package to your vendored copies and presents them under their original names.
+
+## Why PyIsolate?
+
+- Avoid dependency conflicts by shipping libraries along with your package.
+- Run multiple versions of the same library in one process (isolated vs global).
+- Keep your public imports unchanged (`import requests` still works) while using your vendored copy inside your package.

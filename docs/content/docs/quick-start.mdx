@@ -1,0 +1,42 @@
+---
+title: Quick Start
+description: Learn how to install and configure PyIsolate in your project.
+---
+
+## Introduction
+
+Install PyIsolate from PyPI:
+
+```bash
+pip install pyisolate
+```
+
+Enable isolation from your package's `__init__.py`:
+
+```python
+from isolator.isolator import isolate_package
+
+isolate_package()
+```
+
+**That's it.** Inside `your_package`, `import requests` resolves to `your_package.libs.requests`. Outside `your_package`, `import requests` continues to resolve to the normal/global install.
+
+## Vendor your dependencies
+
+Vendor your dependencies into your package `/libs` directory:
+
+```bash
+pip install -t libs requests==2.32.3 pydantic~1.10
+```
+
+## Minimal layout example
+
+```
+your_package/
+	__init__.py          # calls isolate_package()
+	feature.py           # can `import requests` → uses vendored copy
+	libs/
+		requests/
+			__init__.py
+			...
+```
