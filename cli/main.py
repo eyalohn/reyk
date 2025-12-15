@@ -1,7 +1,10 @@
 import typer
 import subprocess
 
-app = typer.Typer()
+app = typer.Typer(
+    help="Manage isolated environment dependencies.",
+    no_args_is_help=True,
+)
 
 @app.command()
 def vendor():
