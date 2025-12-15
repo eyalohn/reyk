@@ -10,3 +10,22 @@ dependencies = []
 dev-dependencies = [
     "pytest>=8.4.2",
 ]
+
+[tool.setuptools.packages.find]
+include = ["pyisolate"]
+
+[tool.uv.workspace]
+members = [
+    "cli",
+]
+
+[tool.uv.sources]
+pyisolate-cli = { workspace = true }
+
+[project.optional-dependencies]
+cli = [
+    "pyisolate-cli",
+]
+
+[project.scripts]
+pyisolate = "pyisolate.cli:main"
