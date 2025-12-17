@@ -23,10 +23,12 @@ isolate_package()
 
 ## Vendor your dependencies
 
-Vendor your dependencies into your package `/libs` directory:
+Vendor your dependencies into your package directory:
 
 ```bash
-pip install -t libs requests==2.32.3 pydantic~1.10
+uvx pyisolate-cli add requests==2.32.3 pydantic~1.10
+uvx pyisolate-cli remove opentelemetry-sdk
+uvx pyisolate-cli vendor
 ```
 
 ## Minimal layout example
