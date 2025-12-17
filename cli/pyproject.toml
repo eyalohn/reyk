@@ -8,5 +8,13 @@ dependencies = [
     "typer>=0.20.0",
 ]
 
+[build-system]
+requires = ["uv_build>=0.8.3,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "src"
+module-root = ""
+
 [project.scripts]
-pyisolate-cli = "main:app"
+pyisolate-cli = "src.main:app"
