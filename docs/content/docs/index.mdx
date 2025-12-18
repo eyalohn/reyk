@@ -11,3 +11,9 @@ It does this by installing a tiny import hook that transparently reroutes import
 - Avoid dependency conflicts by shipping libraries along with your package.
 - Run multiple versions of the same library in one process (isolated vs global).
 - Keep your public imports unchanged (`import requests` still works) while using your vendored copy inside your package.
+
+## Use Cases
+
+- **Plugin Systems**: Allow plugins to use different dependency versions
+- **Runtime Frameworks**: Isolate framework dependencies from user code
+- **Library Development**: Ship dependencies with your library to avoid conflicts with user environments

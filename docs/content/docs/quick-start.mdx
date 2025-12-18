@@ -1,44 +1,80 @@
 ---
 title: Quick Start
-description: Learn how to install and configure PyIsolate in your project.
+description: Learn how to install and configure pyisolate in your project.
 ---
 
-## Introduction
+## Installation
 
-Install PyIsolate from PyPI:
+<Callout>
+  Pyisolate uses [uv](https://docs.astral.sh/uv) for package management. Make
+  sure you have uv installed and initialized in your project.
+</Callout>
+
+Install pyisolate from PyPI:
 
 ```bash
-pip install pyisolate
+uv add pyisolate
 ```
+
+## Basic Setup
 
 Enable isolation from your package's `__init__.py`:
 
 ```python
-from isolator.isolator import isolate_package
+from pyisolate.isolator import isolate_package
 
 isolate_package()
 ```
 
-**That's it.** Inside `your_package`, `import requests` resolves to `your_package.libs.requests`. Outside `your_package`, `import requests` continues to resolve to the normal/global install.
+**That's it!** Inside `your_package`, `import requests` resolves to `your_package.libs.requests`. Outside `your_package`, `import requests` continues to resolve to the normal/global install.
 
-## Vendor your dependencies
+## Vendor Your Dependencies
 
-Vendor your dependencies into your package directory:
+The easiest way to manage vendored dependencies is using the pyisolate CLI:
 
 ```bash
+# Add dependencies
 uvx pyisolate-cli add requests==2.32.3 pydantic~1.10
+
+# Remove dependencies
 uvx pyisolate-cli remove opentelemetry-sdk
+
+# Vendor dependencies into your package
 uvx pyisolate-cli vendor
 ```
 
-## Minimal layout example
+## Project Layout
+
+A minimal pyisolate-enabled package looks like this:
 
 ```
 your_package/
-	__init__.py          # calls isolate_package()
-	feature.py           # can `import requests` → uses vendored copy
-	libs/
-		requests/
-			__init__.py
-			...
+    __init__.py          # calls isolate_package()
+    feature.py           # can `import requests` → uses vendored copy
+    libs/
+        requests/
+            __init__.py
+            ...
 ```
+
+## Next Steps
+
+You may be interested:
+
+<Cards>
+  <Card
+    title="Examples & Use Cases"
+    description="Explore practical examples and use cases for pyisolate."
+    href="/docs/examples"
+  />
+  <Card
+    title="API Reference"
+    description="Detailed documentation of pyisolate's API and CLI."
+    href="/docs/api-reference"
+  />
+  <Card
+    title="How pyisolate Works"
+    description="Understand the import mechanics behind pyisolate."
+    href="/docs/how-it-works/understanding-imports"
+  />
+</Cards>

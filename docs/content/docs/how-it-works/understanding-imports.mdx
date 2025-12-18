@@ -2,13 +2,11 @@
 title: Understanding Python Imports
 ---
 
-PyIsolate installs a custom meta-path importer that:
+`pyisolate` leverages Python's import system internals to achieve transparent dependency isolation.
 
-1. Detects whether an import originates from within your package
-
-2. Checks for a vendored version of the requested module
-
-3. Redirects the import when appropriate
+1. **Detects** whether an import originates from within your package
+2. **Checks** for a vendored version of the requested module
+3. **Redirects** the import when appropriate
 
 ## Learn More
 

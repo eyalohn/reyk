@@ -1,7 +1,7 @@
 [project]
 name = "pyisolate"
 version = "0.1.0"
-description = "TODO"
+description = "Transparent dependency isolation for Python packages using vendored libraries"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
