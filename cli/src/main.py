@@ -27,6 +27,7 @@ def vendor(group: str = option_group, libs_path: Path = option_libs_path):
             group,
             "--no-header",
             "--quiet",
+            "--no-emit-project",
             "--output-file",
             str(lock_file),
         ]
