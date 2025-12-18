@@ -10,9 +10,6 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-DEFAULT_LIBS_PATH = Path("libs")
-DEFAULT_LIBS_DEP_GROUP = "libs"
-
 
 @app.command(
     help="Vendor the isolated environment dependencies.",
