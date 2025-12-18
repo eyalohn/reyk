@@ -1,5 +1,5 @@
 try:
-    from pyisolate_cli.main import app as cli_app
+    from pyisolate_cli.src.main import app as cli_app
 
 except ImportError:  # pragma: no cover
     cli_app = None  # type: ignore
