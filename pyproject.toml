@@ -18,14 +18,3 @@ include = ["pyisolate"]
 members = [
     "cli",
 ]
-
-[tool.uv.sources]
-pyisolate-cli = { workspace = true }
-
-[project.optional-dependencies]
-cli = [
-    "pyisolate-cli",
-]
-
-[project.scripts]
-pyisolate = "pyisolate.cli:main"
