@@ -4,7 +4,7 @@ export function baseOptions(): BaseLayoutProps {
   return {
     githubUrl: 'https://github.com/OughtToPrevail/pyisolate',
     nav: {
-      title: 'pyisolate',
+      title: 'PyIsolate',
     },
   };
 }
