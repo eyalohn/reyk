@@ -17,6 +17,11 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
 
   const MDX = page.data.body;
 
+  // If we're at the root /docs path, show the homepage content
+  if (!params.slug || params.slug.length === 0) {
+    return <MDX />;
+  }
+
   return (
     <DocsPage toc={page.data.toc} full={page.data.full}>
       <DocsTitle>{page.data.title}</DocsTitle>
