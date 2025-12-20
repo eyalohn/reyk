@@ -1,3 +1,8 @@
 {
-  "pages": ["index", "quick-start", "api-reference", "how-it-works"]
+  "pages": [
+    "[House][Home](/docs)",
+    "quick-start",
+    "api-reference",
+    "how-it-works"
+  ]
 }
