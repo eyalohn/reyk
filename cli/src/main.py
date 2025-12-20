@@ -2,9 +2,9 @@ from pathlib import Path
 
 import typer
 
+from .command_executor import run_command
 from .common_options import option_group, option_libs_path
 from .consts import LOCK_FILE_NAME
-from .utils import run_command
 
 app = typer.Typer(
     help="Manage isolated environment dependencies.",
