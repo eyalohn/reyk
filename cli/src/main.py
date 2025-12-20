@@ -3,6 +3,7 @@ from pathlib import Path
 import typer
 
 from .common_options import option_group, option_libs_path
+from .consts import LOCK_FILE_NAME
 from .utils import run_command
 
 app = typer.Typer(
@@ -18,7 +19,10 @@ app = typer.Typer(
 )
 def vendor(group: str = option_group, libs_path: Path = option_libs_path):
     """Install the isolated environment dependencies."""
-    lock_file = libs_path / "vednor.txt"
+    # `uv pip sync` is the only command that supports installing to a custom target,
+    # but it requires a lock file. Therefore, we first export the lock file of the libs group
+    # and then use it to install the packages to the desired target.
+    lock_file = libs_path / LOCK_FILE_NAME
     run_command(
         [
             "uv",
@@ -29,7 +33,7 @@ def vendor(group: str = option_group, libs_path: Path = option_libs_path):
             "--quiet",
             "--no-emit-project",
             "--output-file",
-            str(lock_file),
+            lock_file,
         ]
     )
     run_command(
@@ -53,6 +57,9 @@ def add(
     ctx: typer.Context, group: str = option_group, libs_path: Path = option_libs_path
 ):
     """Add packages to the isolated environment."""
+    # The `uv add` command doesn't support installing to a custom target,
+    # so we use `--frozen` just to append the package to the `pyproject.toml`.
+    # Then we call `vendor` to actually install the packages to the desired libs target.
     run_command(["uv", "add", "--frozen", "--group", group, *ctx.args])
     vendor(group=group, libs_path=libs_path)
 
@@ -66,6 +73,9 @@ def remove(
     ctx: typer.Context, group: str = option_group, libs_path: Path = option_libs_path
 ):
     """Remove packages from the isolated environment."""
+    # The `uv remove` command doesn't support installing to a custom target,
+    # so we use `--frozen` just to remove the package from the `pyproject.toml`.
+    # Then we call `vendor` to actually uninstall the package from the desired libs target.
     run_command(["uv", "remove", "--frozen", "--group", group, *ctx.args])
     vendor(group=group, libs_path=libs_path)
 

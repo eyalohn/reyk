@@ -1,9 +1,6 @@
-from pathlib import Path
-
 import typer
 
-DEFAULT_LIBS_PATH = Path("libs")
-DEFAULT_LIBS_DEP_GROUP = "libs"
+from .consts import DEFAULT_LIBS_DEP_GROUP, DEFAULT_LIBS_PATH
 
 option_group = typer.Option(
     default=DEFAULT_LIBS_DEP_GROUP,
