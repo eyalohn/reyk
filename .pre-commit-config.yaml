@@ -1,0 +1,46 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: no-commit-to-branch  # Raises error if a commit is done to main
+      - id: check-yaml
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: name-tests-test
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        additional_dependencies:
+          - tomli
+
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.20.0
+    hooks:
+      - id: yamlfmt
+        args: ['-lint']
+  
+
+  - repo: local
+    hooks:
+      # Need to implement
+      # - id: lint
+      #   name: Lint
+      #   entry: make lint-python
+      #   types: [python]
+      #   language: system
+      #   pass_filenames: false
+      # - id: lint rust
+      #   name: Lint Rust
+      #   entry: make lint-rust
+      #   types: [rust]
+      #   language: system
+      #   pass_filenames: false
+      # - id: typecheck
+      #   name: Typecheck
+      #   entry: uv run pyright pydantic
+      #   types: [python]
+      #   language: system
+      #   pass_filenames: false
