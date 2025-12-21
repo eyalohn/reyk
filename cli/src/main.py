@@ -3,8 +3,7 @@ from pathlib import Path
 import typer
 
 from .command_executor import run_command
-from .common_options import option_group, option_libs_path
-from .consts import LOCK_FILE_NAME
+from .consts import LOCK_FILE_NAME, option_group, option_libs_path
 
 app = typer.Typer(
     help="Manage isolated environment dependencies.",
