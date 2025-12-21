@@ -16,6 +16,5 @@ include = ["pyisolate"]
 
 [tool.uv.workspace]
 members = [
-    "cli",
-    "example",
+    "pyisolate_cli",
 ]
