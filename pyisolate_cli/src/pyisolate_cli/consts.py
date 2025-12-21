@@ -5,7 +5,7 @@ import typer
 DEFAULT_LIBS_PATH = Path("libs")
 DEFAULT_LIBS_DEP_GROUP = "libs"
 
-LOCK_FILE_NAME = "vendor.txt"
+LOCK_FILE_NAME = "vendor.lock"
 
 
 option_group = typer.Option(
