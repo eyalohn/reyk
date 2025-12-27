@@ -18,5 +18,5 @@ linting = [
 
 
 [tool.codespell]
-skip = '.git,env*,uv.lock,package-lock.json,test_libs'
-ignore-words-list = 'pyisolate'  # Comma-separated
+skip = ".git,env*,uv.lock,package-lock.json,test_libs"
+ignore-words-list = ["pyisolate"]  # Comma-separated
