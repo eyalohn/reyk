@@ -16,31 +16,23 @@ repos:
         additional_dependencies:
           - tomli
 
-  - repo: https://github.com/google/yamlfmt
-    rev: v0.20.0
-    hooks:
-      - id: yamlfmt
-        args: ['-lint']
-  
+  # - repo: https://github.com/google/yamlfmt
+  #   rev: v0.20.0
+  #   hooks:
+  #     - id: yamlfmt
+  #       args: ['-lint']
 
-  - repo: local
-    hooks:
-      # Need to implement
-      # - id: lint
-      #   name: Lint
-      #   entry: make lint-python
-      #   types: [python]
-      #   language: system
-      #   pass_filenames: false
-      # - id: lint rust
-      #   name: Lint Rust
-      #   entry: make lint-rust
-      #   types: [rust]
-      #   language: system
-      #   pass_filenames: false
-      # - id: typecheck
-      #   name: Typecheck
-      #   entry: uv run pyright pydantic
-      #   types: [python]
-      #   language: system
-      #   pass_filenames: false
+
+  # - repo: https://github.com/astral-sh/ruff-pre-commit
+  #   rev: v0.14.10
+  #   hooks:
+  #     - id: ruff-check
+  #       name: Ruff Lint
+  #       args: [ --fix ]
+  #     - id: ruff-format
+  #       name: Ruff Format
+
+  # - repo: https://github.com/RobertCraigie/pyright-python
+  #   rev: v1.1.407
+  #   hooks:
+  #   - id: pyright
