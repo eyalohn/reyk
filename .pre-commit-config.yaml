@@ -2,12 +2,13 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
-      - id: no-commit-to-branch  # Raises error if a commit is done to main
+      - id: no-commit-to-branch # Raises error if a commit is done to main
       - id: check-yaml
       - id: check-toml
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: name-tests-test
+      - id: check-merge-conflict
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
@@ -16,23 +17,21 @@ repos:
         additional_dependencies:
           - tomli
 
-  # - repo: https://github.com/google/yamlfmt
-  #   rev: v0.20.0
-  #   hooks:
-  #     - id: yamlfmt
-  #       args: ['-lint']
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.20.0
+    hooks:
+      - id: yamlfmt
 
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.10
+    hooks:
+      - id: ruff-check
+        name: Ruff Lint
+        args: [--fix]
+      - id: ruff-format
+        name: Ruff Format
 
-  # - repo: https://github.com/astral-sh/ruff-pre-commit
-  #   rev: v0.14.10
-  #   hooks:
-  #     - id: ruff-check
-  #       name: Ruff Lint
-  #       args: [ --fix ]
-  #     - id: ruff-format
-  #       name: Ruff Format
-
-  # - repo: https://github.com/RobertCraigie/pyright-python
-  #   rev: v1.1.407
-  #   hooks:
-  #   - id: pyright
+  - repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.407
+    hooks:
+      - id: pyright
