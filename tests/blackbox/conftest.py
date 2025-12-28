@@ -4,7 +4,11 @@ import pytest
 
 from pyisolate.vendor_importer import get_installed_vendor_importer
 from tests.blackbox.libraries_manager import LibrariesManager
-from tests.blackbox.project_paths import EXAMPLE_PROJECT_PATH, EXAMPLE_PROJECT_LIBRARIES_DIRECTORY_RELATIVE_PATH, TEST_LIBRARIES_DIRECTORY_PATH
+from tests.blackbox.project_paths import (
+    EXAMPLE_PROJECT_PATH,
+    EXAMPLE_PROJECT_LIBRARIES_DIRECTORY_RELATIVE_PATH,
+    TEST_LIBRARIES_DIRECTORY_PATH,
+)
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 
 
@@ -33,15 +37,15 @@ def libraries_manager() -> Iterable[LibrariesManager]:
     yield libraries_manager
     libraries_manager.remove_libraries_from_path()
     libraries_manager.cleanup_libraries_dir()
-        
+
 
 @pytest.fixture(scope="session", autouse=True)
-def import_example_project(install_project_in_path) -> None:
+def import_example_project() -> None:
     # This is crucial to happen before `clear_imported_modules_cache` as it will isolate
     # the project every test as the `__init__` will be reloaded (as its removed from sys modules)
 
     import example_project
-        
+
 
 @pytest.fixture(autouse=True)
 def clear_vendorized_modules_cache() -> None:

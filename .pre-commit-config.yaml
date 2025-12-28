@@ -6,8 +6,6 @@ repos:
       - id: check-yaml
       - id: check-toml
       - id: end-of-file-fixer
-      - id: trailing-whitespace
-      - id: name-tests-test
       - id: check-merge-conflict
 
   - repo: https://github.com/codespell-project/codespell

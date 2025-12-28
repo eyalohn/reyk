@@ -25,8 +25,7 @@ class BuiltinsImporter(Protocol):
         locals: Mapping[str, object] | None = None,
         fromlist: Sequence[str] | None = (),
         level: int = 0,
-    ) -> ModuleType:
-        ...
+    ) -> ModuleType: ...
 
 
 class ImportLibImporter(Protocol):
@@ -34,8 +33,7 @@ class ImportLibImporter(Protocol):
         self,
         name: str,
         package: str | None = None,
-    ) -> ModuleType:
-        ...
+    ) -> ModuleType: ...
 
 
 class VendorImporter(DistributionFinder):
@@ -84,7 +82,7 @@ class VendorImporter(DistributionFinder):
             self._sys_modules_state_handler.remove_vendorized_sys_modules()
             module = self._original_builtins_import_method(name, globals, locals, fromlist, level)
             imported_vendorized = False
-        
+
         if imported_vendorized:
             is_absolute_import = fromlist is None or len(fromlist) == 0
             if is_absolute_import:
@@ -99,7 +97,7 @@ class VendorImporter(DistributionFinder):
 
         LOGGER.debug(f"Imported: {module}")
         return module
-    
+
     def importlib_import_override(
         self,
         name: str,
@@ -118,7 +116,7 @@ class VendorImporter(DistributionFinder):
             LOGGER.debug(f"Failed to import vendorized: {name}: {exc!s}")
             self._sys_modules_state_handler.remove_vendorized_sys_modules()
             return self._original_importlib_import_method(name, None)
-    
+
     def _retrieve_absolute_import_module(
         self,
         module_name: str,
@@ -134,9 +132,9 @@ class VendorImporter(DistributionFinder):
             module_without_vendor_prefix = sys.modules.get(returned_module_name_with_prefix)
             if module_without_vendor_prefix is None:
                 raise ModuleNotFoundError(f"No module named: '{returned_module_name_with_prefix}'")
-        
+
         return module_without_vendor_prefix
-    
+
     def _add_imported_sub_modules_to_vendorized(
         self,
         module_name: str,
@@ -157,7 +155,7 @@ class VendorImporter(DistributionFinder):
         for index, path_component in enumerate(packages):
             if index > 0:
                 current_module = getattr(current_module, path_component)
-            current_module_name = ".".join(packages[:index + 1])
+            current_module_name = ".".join(packages[: index + 1])
             self._sys_modules_state_handler.add_only_vendorized_module(current_module_name, current_module)
 
     def _try_retrieving_imported_module_by_getattr(
@@ -187,11 +185,11 @@ class VendorImporter(DistributionFinder):
             packages,
             returned_module,
         )
-    
+
     def _extract_returned_module_name(self, module_name: str) -> str:
         returned_module_attribute, _, _ = module_name.partition(".")
         return returned_module_attribute
-    
+
     def _should_import_vendorized(
         self,
         name: str,
@@ -199,7 +197,7 @@ class VendorImporter(DistributionFinder):
         if name.startswith(RELATIVE_IMPORT_PREFIX):
             LOGGER.debug("Relative imports don't require changing the import path for vendorized packages")
             return False
-            
+
         if name.startswith(self.vendor_prefix):
             # Cannot import actual path - another metapath finder should do that
             LOGGER.debug(
@@ -207,7 +205,7 @@ class VendorImporter(DistributionFinder):
                 "no need to change the import path"
             )
             return False
-        
+
         if name == self._package_name:
             LOGGER.debug(f"Cannot re-import the library: {self._package_name}")
             return False
@@ -217,7 +215,7 @@ class VendorImporter(DistributionFinder):
             return False
 
         return True
-    
+
     def find_distributions(
         self,
         context: DistributionFinder.Context | None = None,
@@ -237,20 +235,20 @@ class VendorImporter(DistributionFinder):
     @property
     def vendor_prefix(self) -> str:
         return f"{self._package_name}.{self._vendorized_libs_dir_name}"
-    
+
     def install(self) -> None:
         builtins.__import__ = self.builtins_import_override
         importlib.import_module = self.importlib_import_override
         if self not in sys.meta_path:
             # For distribution finder
             sys.meta_path.append(self)
-    
+
     def uninstall(self) -> None:
         builtins.__import__ = self._original_builtins_import_method
         importlib.import_module = self._original_importlib_import_method
         if self in sys.meta_path:
             sys.meta_path.remove(self)
-    
+
     def clear_vendorized_cache(self) -> None:
         self._sys_modules_state_handler.clear_state()
 
@@ -259,5 +257,5 @@ def get_installed_vendor_importer() -> VendorImporter | None:
     import_owner = getattr(builtins.__import__, "__self__", None)
     if (import_owner is None) or (not isinstance(import_owner, VendorImporter)):
         return None
-    
+
     return import_owner

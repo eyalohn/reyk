@@ -1,3 +1,4 @@
+# pyright: reportMissingImports=false
 from pathlib import Path
 import sys
 import pytest
@@ -57,7 +58,10 @@ def test_import_project_module_from_project(
         MY_STRING_NAME,
     ),
 )
-def test_import_library_module_from_project(variable_access_statement: str, files_manager: ExampleProjectFileManager) -> None:
+def test_import_library_module_from_project(
+    variable_access_statement: str,
+    files_manager: ExampleProjectFileManager,
+) -> None:
     files_manager.create_library_module(
         library_name="example_library",
         module_name="library_module",
@@ -78,7 +82,10 @@ def test_import_library_module_from_project(variable_access_statement: str, file
         MY_STRING_NAME,
     ),
 )
-def test_import_project_package_from_project(variable_access_statement: str, files_manager: ExampleProjectFileManager) -> None:
+def test_import_project_package_from_project(
+    variable_access_statement: str,
+    files_manager: ExampleProjectFileManager,
+) -> None:
     files_manager.create_project_module(
         module_name="example_package.__init__",
         content=MY_STRING_DECLARATION_MODULE,
@@ -98,7 +105,10 @@ def test_import_project_package_from_project(variable_access_statement: str, fil
         MY_STRING_NAME,
     ),
 )
-def test_import_library_package_from_project(variable_access_statement: str, files_manager: ExampleProjectFileManager) -> None:
+def test_import_library_package_from_project(
+    variable_access_statement: str,
+    files_manager: ExampleProjectFileManager,
+) -> None:
     files_manager.create_library_module(
         library_name="example_library",
         module_name="__init__",
@@ -117,19 +127,22 @@ def test_import_library_package_from_project(variable_access_statement: str, fil
         ALL_IMPORT_TECHNIQUES_BUT_RELATIVE,
         "example_library.module",
         MY_STRING_NAME,
-    )
+    ),
 )
 @pytest.mark.parametrize(
     "library_internal_import_statement",
     [
         pytest.param(f"from example_library.other_module import {MY_STRING_NAME}", id="From entire module"),
         pytest.param(f"from .other_module import {MY_STRING_NAME}", id="From relative module"),
-        pytest.param(f"""
+        pytest.param(
+            f"""
 import importlib
 other_module = importlib.import_module(".other_module", package=__package__)
 {MY_STRING_NAME} = other_module.{MY_STRING_NAME}
-""", id="From relative module with importlib"),
-    ]
+""",
+            id="From relative module with importlib",
+        ),
+    ],
 )
 def test_import_library_module_from_library(
     variable_access_statement: str,
@@ -161,11 +174,14 @@ def test_import_library_module_from_library(
         MY_STRING_NAME,
     ),
 )
-def test_import_library_package_from_library(variable_access_statement: str, files_manager: ExampleProjectFileManager) -> None:
+def test_import_library_package_from_library(
+    variable_access_statement: str,
+    files_manager: ExampleProjectFileManager,
+) -> None:
     files_manager.create_library_module(
         library_name="example_library",
         module_name="module",
-        content=f"from example_library.example_package import {MY_STRING_NAME}"
+        content=f"from example_library.example_package import {MY_STRING_NAME}",
     )
     files_manager.create_library_module(
         library_name="example_library",
@@ -187,11 +203,14 @@ def test_import_library_package_from_library(variable_access_statement: str, fil
         MY_STRING_NAME,
     ),
 )
-def test_import_recursive_library_module_in_init(variable_access_statement: str, files_manager: ExampleProjectFileManager) -> None:
+def test_import_recursive_library_module_in_init(
+    variable_access_statement: str,
+    files_manager: ExampleProjectFileManager,
+) -> None:
     files_manager.create_library_module(
         library_name="example_library",
         module_name="__init__",
-        content=f"from example_library.first_module import {MY_STRING_NAME}"
+        content=f"from example_library.first_module import {MY_STRING_NAME}",
     )
     files_manager.create_library_module(
         library_name="example_library",
@@ -214,11 +233,9 @@ import example_library.second_module
 
 
 def test_import_sys_module_in_project(files_manager: ExampleProjectFileManager) -> None:
-    files_manager.create_project_module(
-        module_name="module",
-        content="import sys"
-    )
+    files_manager.create_project_module(module_name="module", content="import sys")
     import example_project.module
+
     assert example_project.module.sys.__name__ == "sys"
 
 
@@ -226,13 +243,14 @@ def test_import_sys_module_in_library(files_manager: ExampleProjectFileManager) 
     files_manager.create_library_module(
         library_name="example_library",
         module_name="library_module",
-        content="import sys"
+        content="import sys",
     )
     files_manager.create_project_module(
         module_name="module",
-        content="from example_library.library_module import sys"
+        content="from example_library.library_module import sys",
     )
     import example_project.module
+
     assert example_project.module.sys.__name__ == "sys"
 
 
@@ -244,7 +262,10 @@ def test_import_sys_module_in_library(files_manager: ExampleProjectFileManager) 
         MY_STRING_NAME,
     ),
 )
-def test_import_different_library_in_library(variable_access_statement: str, files_manager: ExampleProjectFileManager) -> None:
+def test_import_different_library_in_library(
+    variable_access_statement: str,
+    files_manager: ExampleProjectFileManager,
+) -> None:
     files_manager.create_library_module(
         library_name="example_library",
         module_name="library_module",
@@ -257,7 +278,7 @@ def test_import_different_library_in_library(variable_access_statement: str, fil
     )
     files_manager.create_project_module(
         module_name="module",
-        content=f"from example_library.library_module import {MY_STRING_NAME}"
+        content=f"from example_library.library_module import {MY_STRING_NAME}",
     )
     _assert_my_string_in_module()
 
@@ -273,7 +294,7 @@ def test_import_project_with_library_in_same_name(
     )
     files_manager.create_project_module(
         module_name="module",
-        content=f"from example_library.library_module import {MY_STRING_NAME}"
+        content=f"from example_library.library_module import {MY_STRING_NAME}",
     )
     library_files_manager = libraries_manager.create_library("example_library")
     library_files_manager.create_project_module(
@@ -283,6 +304,7 @@ def test_import_project_with_library_in_same_name(
     library_files_manager.create_project_module(module_name="__init__", content="")
     _assert_my_string_in_module()
     import example_library.module
+
     assert example_library.module.MY_STRING == MY_STRING_EXPECTED_VALUE
 
 
@@ -295,10 +317,11 @@ def test_import_real_library_with_same_name(files_manager: ExampleProjectFileMan
     )
     files_manager.create_project_module(
         module_name="module",
-        content=f"from pytest import {MY_STRING_NAME}"
+        content=f"from pytest import {MY_STRING_NAME}",
     )
     _assert_my_string_in_module()
     import pytest
+
     assert not hasattr(pytest, MY_STRING_NAME)
 
 
@@ -311,14 +334,15 @@ def test_file_attribute_correct(files_manager: ExampleProjectFileManager) -> Non
         content="MY_FILE_PATH = __file__",
     )
     files_manager.create_project_module(
-        module_name="module",
-        content="from example_library.library_module import MY_FILE_PATH"
+        module_name="module", content="from example_library.library_module import MY_FILE_PATH"
     )
     from example_project.module import MY_FILE_PATH
-    expected_module_path = (EXAMPLE_PROJECT_LIBRARIES_PATH / library_name / f"{library_module_name}.py")
+
+    expected_module_path = EXAMPLE_PROJECT_LIBRARIES_PATH / library_name / f"{library_module_name}.py"
     assert Path(MY_FILE_PATH) == expected_module_path
 
 
 def _assert_my_string_in_module() -> None:
     import example_project.module
+
     assert example_project.module.MY_STRING == MY_STRING_EXPECTED_VALUE

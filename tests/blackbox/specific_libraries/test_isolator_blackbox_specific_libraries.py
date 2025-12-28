@@ -1,3 +1,4 @@
+# pyright: reportMissingImports=false
 from pathlib import Path
 import shutil
 from collections.abc import Iterable
@@ -31,7 +32,7 @@ def install_test_libs() -> Iterable[None]:
         "pydantic",  # Rust pyd
         "aiormq",  # Lots of relative imports
         "pika",  # Large library with lots of builtins usage
-    ]
+    ],
 )
 def test_import_library(files_manager: ExampleProjectFileManager, library_name: str) -> None:
     _import_module_in_project(files_manager, library_name)
@@ -54,8 +55,8 @@ def test_import_protobuf(files_manager: ExampleProjectFileManager) -> None:
 
 def _import_module_in_project(files_manager: ExampleProjectFileManager, library_name: str) -> ModuleType:
     files_manager.create_project_module(
-        module_name="module",
-        content=f"imported_library = __import__('{library_name}')"
+        module_name="module", content=f"imported_library = __import__('{library_name}')"
     )
     from example_project.module import imported_library
+
     return imported_library

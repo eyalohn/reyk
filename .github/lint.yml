@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         # Pip is required for pre-commit (https://pre-commit.com/#python):
         run: |
-          uv sync --group linting --all-extras --all-packages
+          uv sync --group dev --all-extras --all-packages
           uv pip install pip
       - uses: pre-commit/action@v3.0.1
         with:
