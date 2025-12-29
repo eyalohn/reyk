@@ -1,6 +1,6 @@
 [project]
 name = "pyisolate"
-version = "0.1.0"
+version = "0.0.1"
 description = "TODO"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -8,7 +8,7 @@ dependencies = []
 
 [dependency-groups]
 dev = [
-    "pre-commit>=4.5.1",
+    "pre-commit>=4.3.0",
     "pytest>=8.4.2",
 ]
 
