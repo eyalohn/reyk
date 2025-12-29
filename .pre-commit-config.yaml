@@ -7,7 +7,7 @@ repos:
       - id: check-toml
       - id: end-of-file-fixer
         types: [python]
-        exclude: test_data
+        exclude: test_libs
       - id: check-merge-conflict
 
   - repo: https://github.com/codespell-project/codespell
