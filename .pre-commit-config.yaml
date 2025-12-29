@@ -6,9 +6,9 @@ repos:
       - id: check-yaml
       - id: check-toml
       - id: end-of-file-fixer
+        types: [python]
+        exclude: test_data
       - id: check-merge-conflict
-    types: [python, toml, yaml]
-    exclude: test_data
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
