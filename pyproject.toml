@@ -3,7 +3,7 @@ name = "pyisolate"
 version = "0.1.0"
 description = "TODO"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.9"
 dependencies = []
 
 [dependency-groups]
@@ -63,5 +63,5 @@ venvPath = "."
 venv = ".venv"
 
 [tool.codespell]
-skip = ".git,env*,uv.lock,package-lock.json,test_libs"
+skip = ".git,env*,uv.lock,package-lock.json,tests/blackbox/specific_libraries/test_libs"
 ignore-words-list = ["pyisolate"]  # Comma-separated
