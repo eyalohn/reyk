@@ -25,7 +25,7 @@ jobs:
         run: uv sync
 
       - name: Run Tests
-        run: uvx run pytest -s -vvvvv
+        run: uv run pytest -s -vvvvv
 
   pytest-memray: # Only runs on Linux
     runs-on: ubuntu-latest
