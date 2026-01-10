@@ -44,7 +44,6 @@ def import_example_project(install_project_in_path: None) -> None:  # noqa: ARG0
     # This is crucial to happen before `clear_imported_modules_cache` as it will isolate
     # the project every test as the `__init__` will be reloaded (as its removed from sys modules)
 
-    print(sys.path)
     import example_project
 
 

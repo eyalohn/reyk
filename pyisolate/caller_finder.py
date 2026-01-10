@@ -21,6 +21,7 @@ class StackFrame:
 
 def get_caller_frame_outside_pyisolate() -> StackFrame:
     for frame in _iterate_over_stack():
+        print(f"Frame in stack: {frame}")
         if is_part_of_stdlib(frame.module_name):
             continue
 
