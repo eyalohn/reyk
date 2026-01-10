@@ -41,7 +41,7 @@ class ExampleProjectFileManager:
     def create_project_file(self, file_name: str, content: str) -> Path:
         project_file = self._project_path / file_name
         if not project_file.parent.exists():
-            project_file.parent.mkdir()
+            project_file.parent.mkdir(parents=True)
             self._created_directories.add(project_file.parent)
 
         project_file.write_text(content)

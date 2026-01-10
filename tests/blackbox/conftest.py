@@ -40,7 +40,7 @@ def libraries_manager() -> Iterable[LibrariesManager]:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def import_example_project() -> None:
+def import_example_project(install_project_in_path: None) -> None:  # noqa: ARG001
     # This is crucial to happen before `clear_imported_modules_cache` as it will isolate
     # the project every test as the `__init__` will be reloaded (as its removed from sys modules)
 
