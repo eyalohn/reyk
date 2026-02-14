@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, Optional
 import builtins
 import importlib
 import logging
@@ -10,7 +10,7 @@ from pyisolate.vendor_importer import BuiltinsImporter, VendorImporter
 LOGGER = logging.getLogger(__name__)
 
 
-def isolate_package(package_path: Path | None = None, vendorized_libs_dir_name: str = "libs") -> None:
+def isolate_package(package_path: Optional[Path] = None, vendorized_libs_dir_name: str = "libs") -> None:
     if package_path is None:
         package_path = get_caller_frame_outside_pyisolate().filename.parent
 
