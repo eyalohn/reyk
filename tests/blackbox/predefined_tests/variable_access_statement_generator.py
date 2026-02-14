@@ -1,4 +1,3 @@
-from typing import TypeAlias
 from collections.abc import Sequence
 from abc import ABC, abstractmethod
 import pytest
@@ -6,7 +5,7 @@ import pytest
 from tests.blackbox.predefined_tests.import_path_extractor import extract_module_name, extract_first_package_name
 
 
-PytestParam: TypeAlias = object  # Sadly there is no type-hint for pytest params
+PytestParam = object  # Sadly there is no type-hint for pytest params
 
 
 class VariableAccessStatementGenerator(ABC):
