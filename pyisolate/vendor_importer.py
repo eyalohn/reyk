@@ -2,7 +2,7 @@ import builtins
 import importlib
 import sys
 from types import ModuleType
-from typing import Protocol
+from typing import Protocol, Optional
 from collections.abc import Sequence, Iterable, Mapping
 from pathlib import Path
 import functools
@@ -21,9 +21,9 @@ class BuiltinsImporter(Protocol):
     def __call__(
         self,
         name: str,
-        globals: Mapping[str, object] | None = None,
-        locals: Mapping[str, object] | None = None,
-        fromlist: Sequence[str] | None = (),
+        globals: Optional[Mapping[str, object]] = None,
+        locals: Optional[Mapping[str, object]] = None,
+        fromlist: Optional[Sequence[str]] = (),
         level: int = 0,
     ) -> ModuleType: ...
 
@@ -32,7 +32,7 @@ class ImportLibImporter(Protocol):
     def __call__(
         self,
         name: str,
-        package: str | None = None,
+        package: Optional[str] = None,
     ) -> ModuleType: ...
 
 
@@ -55,9 +55,9 @@ class VendorImporter(DistributionFinder):
     def builtins_import_override(
         self,
         name: str,
-        globals: Mapping[str, object] | None = None,
-        locals: Mapping[str, object] | None = None,
-        fromlist: Sequence[str] | None = (),
+        globals: Optional[Mapping[str, object]] = None,
+        locals: Optional[Mapping[str, object]] = None,
+        fromlist: Optional[Sequence[str]] = (),
         level: int = 0,
     ) -> ModuleType:
         # Note: ALL import calls should be in this function as to not increase the call stack significantly
@@ -101,7 +101,7 @@ class VendorImporter(DistributionFinder):
     def importlib_import_override(
         self,
         name: str,
-        package: str | None = None,
+        package: Optional[str] = None,
     ) -> ModuleType:
         # If package is not None it's a relative import
         if not self._should_import_vendorized(name) or package is not None:
@@ -162,7 +162,7 @@ class VendorImporter(DistributionFinder):
         self,
         module_name: str,
         returned_module: ModuleType,
-    ) -> ModuleType | None:
+    ) -> Optional[ModuleType]:
         """
         If we perform the following from example_project:
         `import example_library.library_module`
@@ -218,7 +218,7 @@ class VendorImporter(DistributionFinder):
 
     def find_distributions(
         self,
-        context: DistributionFinder.Context | None = None,
+        context: Optional[DistributionFinder.Context] = None,
     ) -> Iterable[Distribution]:
         if context is None:
             context = DistributionFinder.Context()
@@ -253,7 +253,7 @@ class VendorImporter(DistributionFinder):
         self._sys_modules_state_handler.clear_state()
 
 
-def get_installed_vendor_importer() -> VendorImporter | None:
+def get_installed_vendor_importer() -> Optional[VendorImporter]:
     import_owner = getattr(builtins.__import__, "__self__", None)
     if (import_owner is None) or (not isinstance(import_owner, VendorImporter)):
         return None
