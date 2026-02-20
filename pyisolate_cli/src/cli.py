@@ -2,8 +2,8 @@ from pathlib import Path
 
 import typer
 
-from .command_executor import run_command
-from .consts import LOCK_FILE_NAME, option_group, option_libs_path
+from pyisolate_cli.command_executor import run_command
+from pyisolate_cli.consts import LOCK_FILE_NAME, option_group, option_libs_path
 
 app = typer.Typer(
     help="Manage isolated environment dependencies.",
@@ -16,7 +16,7 @@ app = typer.Typer(
     # Allow any extra args to be passed to `uv`
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )
-def vendor(group: str = option_group, libs_path: Path = option_libs_path):
+def vendor(group: str = option_group, libs_path: Path = option_libs_path) -> None:
     """Install the isolated environment dependencies."""
     # `uv pip sync` is the only command that supports installing to a custom target,
     # but it requires a lock file. Therefore, we first export the lock file of the libs group
@@ -59,8 +59,11 @@ def add(
     # The `uv add` command doesn't support installing to a custom target,
     # so we use `--frozen` just to append the package to the `pyproject.toml`.
     # Then we call `vendor` to actually install the packages to the desired libs target.
-    run_command(["uv", "add", "--frozen", "--group", group, *ctx.args])
-    vendor(group=group, libs_path=libs_path)
+    from pyisolate_cli import configuration_reader
+    import os
+    print(configuration_reader.read_pyisolate_configuration(Path(os.getcwd()) / "pyproject.toml"))
+    # run_command(["uv", "add", "--frozen", "--group", group, *ctx.args])
+    # vendor(group=group, libs_path=libs_path)
 
 
 @app.command(
