@@ -32,7 +32,7 @@ def vendor(group: str = option_group, libs_path: Path = option_libs_path) -> Non
             "--quiet",
             "--no-emit-project",
             "--output-file",
-            lock_file,
+            str(lock_file),
         ]
     )
     run_command(
@@ -40,7 +40,7 @@ def vendor(group: str = option_group, libs_path: Path = option_libs_path) -> Non
             "uv",
             "pip",
             "sync",
-            lock_file,
+            str(lock_file),
             "--target",
             str(libs_path),
         ]
