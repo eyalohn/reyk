@@ -8,7 +8,11 @@ dependencies = []
 
 [dependency-groups]
 dev = [
-    "pytest>=8.4.2",
+    "pre-commit>=4.3.0",
+    "pytest>=8.4.2"
+]
+testing-extra = [
+    "pytest-memray>=1.8.0; platform_python_implementation == 'CPython' and platform_system != 'Windows'",
 ]
 
 [tool.setuptools.packages.find]
@@ -17,12 +21,6 @@ include = ["pyisolate"]
 [tool.uv.workspace]
 members = [
     "pyisolate_cli",
-]
-    "pre-commit>=4.3.0",
-    "pytest>=8.4.2"
-]
-testing-extra = [
-    "pytest-memray>=1.8.0; platform_python_implementation == 'CPython' and platform_system != 'Windows'",
 ]
 
 [tool.ruff]
