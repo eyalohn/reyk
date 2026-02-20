@@ -32,7 +32,7 @@ def vendor(group: str = option_group, libs_path: Path = option_libs_path) -> Non
             "--quiet",
             "--no-emit-project",
             "--output-file",
-            lock_file,
+            str(lock_file),
         ]
     )
     run_command(
@@ -40,7 +40,7 @@ def vendor(group: str = option_group, libs_path: Path = option_libs_path) -> Non
             "uv",
             "pip",
             "sync",
-            lock_file,
+            str(lock_file),
             "--target",
             str(libs_path),
         ]
@@ -52,9 +52,7 @@ def vendor(group: str = option_group, libs_path: Path = option_libs_path) -> Non
     # Allow any extra args to be passed to `uv`
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )
-def add(
-    ctx: typer.Context, group: str = option_group, libs_path: Path = option_libs_path
-):
+def add(ctx: typer.Context, group: str = option_group, libs_path: Path = option_libs_path) -> None:
     """Add packages to the isolated environment."""
     # The `uv add` command doesn't support installing to a custom target,
     # so we use `--frozen` just to append the package to the `pyproject.toml`.
@@ -71,9 +69,7 @@ def add(
     # Allow any extra args to be passed to `uv`
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )
-def remove(
-    ctx: typer.Context, group: str = option_group, libs_path: Path = option_libs_path
-):
+def remove(ctx: typer.Context, group: str = option_group, libs_path: Path = option_libs_path) -> None:
     """Remove packages from the isolated environment."""
     # The `uv remove` command doesn't support installing to a custom target,
     # so we use `--frozen` just to remove the package from the `pyproject.toml`.
