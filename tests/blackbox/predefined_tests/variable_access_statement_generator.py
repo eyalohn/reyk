@@ -1,4 +1,3 @@
-from typing import TypeAlias
 from collections.abc import Sequence
 from abc import ABC, abstractmethod
 import pytest
@@ -6,14 +5,13 @@ import pytest
 from tests.blackbox.predefined_tests.import_path_extractor import extract_module_name, extract_first_package_name
 
 
-PytestParam: TypeAlias = object  # Sadly there is no type-hint for pytest params
+PytestParam = object  # Sadly there is no type-hint for pytest params
 
 
 class VariableAccessStatementGenerator(ABC):
     @staticmethod
     @abstractmethod
-    def generate(containing_module_import_path: str, variable_name: str) -> PytestParam:
-        ...
+    def generate(containing_module_import_path: str, variable_name: str) -> PytestParam: ...
 
 
 class AbsoluteImportModuleStatement(VariableAccessStatementGenerator):
@@ -24,7 +22,7 @@ class AbsoluteImportModuleStatement(VariableAccessStatementGenerator):
 import {containing_module_import_path}
 {variable_name} = {containing_module_import_path}.{variable_name}
             """,
-            id="Import entire module then extract variable"
+            id="Import entire module then extract variable",
         )
 
 
@@ -44,7 +42,7 @@ class RelativeImportStatement(VariableAccessStatementGenerator):
     def generate(containing_module_import_path: str, variable_name: str) -> PytestParam:
         module_name = extract_module_name(containing_module_import_path)
         return pytest.param(
-                f"""
+            f"""
 from .{module_name} import {variable_name}
             """,
             id="Relative from import module",
@@ -53,12 +51,12 @@ from .{module_name} import {variable_name}
 
 class StarImportStatement(VariableAccessStatementGenerator):
     @staticmethod
-    def generate(containing_module_import_path: str, variable_name: str) -> PytestParam:
+    def generate(containing_module_import_path: str, variable_name: str) -> PytestParam:  # noqa: ARG004
         return pytest.param(
             f"""
 from {containing_module_import_path} import *
             """,
-            id="Import ALL variables using star-import"
+            id="Import ALL variables using star-import",
         )
 
 
@@ -105,7 +103,7 @@ __import__("{containing_module_import_path}")
 imported_module = sys.modules["{containing_module_import_path}"]
 {variable_name} = imported_module.{variable_name}
             """,
-            id="Mimic C Import by importing then retrieving from sys modules"
+            id="Mimic C Import by importing then retrieving from sys modules",
         )
 
 
@@ -128,7 +126,4 @@ def generate_variable_access_statement_params(
     containing_module_import_path: str,
     variable_name: str,
 ) -> Sequence[PytestParam]:
-    return [
-        statement.generate(containing_module_import_path, variable_name)
-        for statement in statements
-    ]
+    return [statement.generate(containing_module_import_path, variable_name) for statement in statements]
