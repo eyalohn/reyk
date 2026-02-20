@@ -1,0 +1,5 @@
+pydantic~=2.12
+aiormq~=6.9
+pika~=1.3
+pymongo~=4.15
+protobuf~=6.32

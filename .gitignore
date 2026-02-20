@@ -28,6 +28,7 @@ cover/
 
 # Tests
 tests/blackbox/locked_files_pending_deletion/
+tests/blackbox/specific_libraries/test_libs
 
 # Docs
 .vercel
