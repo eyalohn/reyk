@@ -55,17 +55,21 @@ def test_add_to_unrelated_group(runner: CliRunner, example_project_path: Path) -
     assert not (example_project_path / DEFAULT_LIBRARIES_TARGET_PATH / "requests").exists()
 
 
-def test_add_to_unrelated_group(runner: CliRunner, example_project_path: Path) -> None:
-    result = runner.invoke(app, ["add", "tomli"])
-    assert result.exit_code == 0
-    result = runner.invoke(app, ["add", "requests", "--group", "unrelated-group"])
-    assert result.exit_code != 0, (
-        "Adding to a group with pyisolate-cli that isn't in 'vendor-groups' should result in an error"
-    )
+def test_add_to_new_vendor_groups(runner: CliRunner, example_project_path: Path) -> None:
+    # TODO: Works
 
-    assert (example_project_path / DEFAULT_LIBRARIES_TARGET_PATH / "tomli").exists()
-    assert not (example_project_path / DEFAULT_LIBRARIES_TARGET_PATH / "requests").exists()
+
+def test_change_vendor_libs(runner: CliRunner, example_project_path: Path) -> None:
+    # TODO: Works - no "vendor-libs" anymore in "vendor-groups"
+    
+    
+def test_no_vendor_groups(runner: CliRunner, example_project_path: Path) -> None:
+    # TODO: Error
+
+
+def test_change_vendor_target(runner: CliRunner, example_project_path: Path) -> None:
+    # TODO: Works
 
 
 def test_add_then_remove_multiple_groups(runner: CliRunner, example_project_path: Path) -> None:
-    ...
+    # TODO: Works
