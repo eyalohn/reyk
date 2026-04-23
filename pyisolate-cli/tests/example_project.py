@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 import tomli_w
 from pyisolate_cli.configuration_reader import (
     DEFAULT_LIBRARIES_TARGET_PATH,
@@ -23,7 +23,7 @@ PYPROJECT_EXAMPLE: dict[str, Any] = {
 
 
 class ExampleProject:
-    def __init__(self, project_path: Path, configuration: PyIsolateConfiguration | None) -> None:
+    def __init__(self, project_path: Path, configuration: Optional[PyIsolateConfiguration]) -> None:
         self._project_path = project_path
         self._configuration = (
             PyIsolateConfiguration(DEFAULT_LIBRARIES_TARGET_PATH, DEFAULT_VENDOR_GROUPS)
