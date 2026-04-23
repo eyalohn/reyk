@@ -20,6 +20,9 @@ $(specific_libraries_test_libs):
 test-library: install install-test-libs
 	uv run pytest -v tests/
 
+test-library-memray: install install-test-libs
+	uv run pytest -v tests/ --memray
+
 test-cli: install install-test-libs
 	uv run pytest -v pyisolate-cli/tests/
 
