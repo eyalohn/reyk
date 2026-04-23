@@ -12,6 +12,10 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=8.4.2",
+    "tomli-w>=1.2.0",
+]
+vendor-libs = [
+    "tomli",
 ]
 
 [build-system]
