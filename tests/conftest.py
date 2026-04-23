@@ -1,4 +1,3 @@
-from collections.abc import Iterable
 import sys
 
 import pytest

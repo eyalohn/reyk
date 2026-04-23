@@ -3,12 +3,16 @@ name = "pyisolate"
 version = "0.1.0"
 description = "Transparent dependency isolation for Python packages using vendored libraries"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.9"
 dependencies = []
 
 [dependency-groups]
 dev = [
-    "pytest>=8.4.2",
+    "pre-commit>=4.3.0",
+    "pytest>=8.4.2"
+]
+testing-extra = [
+    "pytest-memray>=1.8.0; platform_python_implementation == 'CPython' and platform_system != 'Windows'",
 ]
 
 [tool.setuptools.packages.find]
@@ -18,3 +22,57 @@ include = ["pyisolate"]
 members = [
     "pyisolate-cli",
 ]
+
+[tool.ruff]
+line-length = 120
+exclude = ["test_libs"]
+
+[tool.ruff.lint]
+select = [
+    "ALL"
+]
+ignore = [
+    "W293",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D100",
+    "T201",
+    "I001",
+    "INP001",
+    "EM102",
+    "TRY003",
+    "S101",
+    "FA102",
+    "UP036",
+    "EM101",
+    "G004",
+    "D107",
+    "FA100",
+    "COM812",
+    "TC006",
+    "SIM118",
+    "D205",
+    "D212",
+    "D401",
+    "D400",
+    "D415",
+    "UP040",
+    "D203",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/test_*.py" = ["SLF001", "PLC0415", "F401"]
+"tests/**/conftest.py" = ["SLF001", "PLC0415", "F401"]
+"pyisolate/vendor_importer.py" = ["A002"]
+
+[tool.pyright]
+include = ["pyisolate", "tests"]
+exclude = ["tests/blackbox/specific_libraries/test_libs", ".venv"]
+venvPath = "."
+venv = ".venv"
+
+[tool.codespell]
+skip = ".git,env*,uv.lock,**/package-lock.json,./tests/blackbox/specific_libraries/test_libs"
+ignore-words-list = ["pyisolate"]  # Comma-separated
