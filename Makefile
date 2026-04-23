@@ -9,7 +9,7 @@ uv:
 
 .PHONY: install
 install: uv
-	uv sync --frozen --all-groups --all-extras
+	uv sync --frozen --all-groups --all-extras --all-packages
 	uv run pre-commit install --install-hooks
 
 install-test-libs: $(specific_libraries_test_libs)
@@ -17,9 +17,13 @@ install-test-libs: $(specific_libraries_test_libs)
 $(specific_libraries_test_libs):
 	uv pip install -r $(specific_libraries_test)/requirements.txt --target $(specific_libraries_test_libs)
 
-test: install install-test-libs
+test-library: install install-test-libs
 	uv run pytest -v tests/
+
+test-cli: install install-test-libs
 	uv run pytest -v pyisolate-cli/tests/
+
+test: test-library test-cli
 
 .PHONY: update-dependencies
 update-dependencies: uv
