@@ -44,6 +44,7 @@ def sync(ctx: typer.Context) -> None:
     """Install the isolated environment dependencies."""
     cast(UVBasedVendorizer, ctx.obj).sync_from_group_to_target_path()
 
+
 @app.command(
     add_help_option=False,
     # Allow any extra args to be passed to `uv`

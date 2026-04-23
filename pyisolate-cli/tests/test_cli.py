@@ -5,7 +5,7 @@ from pyisolate_cli.configuration_reader import (
     DEFAULT_LIBRARIES_TARGET_PATH,
     DEFAULT_VENDOR_GROUP,
     DEFAULT_VENDOR_GROUPS,
-    PyIsolateConfiguration
+    PyIsolateConfiguration,
 )
 from tests.example_project import ExampleProject
 
@@ -80,13 +80,13 @@ def test_change_vendor_libs(runner: CliRunner, example_project: ExampleProject) 
     assert result.exit_code == 0
 
     assert example_project.get_existing_libraries() == {"tomli"}
-    
+
 
 def test_sync_no_vendor_groups(runner: CliRunner, example_project: ExampleProject) -> None:
     result = runner.invoke(app, "sync")
     assert result.exit_code != 0, "Vendor groups does not exist in pyproject toml but sync works."
     assert not example_project.has_libs_directory()  # sync did not work
-    
+
 
 @pytest.mark.parametrize(
     "example_project",
