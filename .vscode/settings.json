@@ -1,11 +1,6 @@
 {
-    "python.testing.pytestArgs": [
-        "."
-    ],
-    "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "cSpell.words": [
-        "blackbox",
-        "vendorized"
+    "python.analysis.extraPaths": [
+        "./pyisolate-cli/src"
     ],
 }
