@@ -1,7 +1,7 @@
 [project]
 name = "pyisolate"
-version = "0.0.1"
-description = "TODO"
+version = "0.1.0"
+description = "Transparent dependency isolation for Python packages using vendored libraries"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = []
@@ -9,10 +9,18 @@ dependencies = []
 [dependency-groups]
 dev = [
     "pre-commit>=4.3.0",
-    "pytest>=8.4.2"
+    "pytest>=8.4.2",
 ]
 testing-extra = [
     "pytest-memray>=1.8.0; platform_python_implementation == 'CPython' and platform_system != 'Windows'",
+]
+
+[tool.setuptools.packages.find]
+include = ["pyisolate"]
+
+[tool.uv.workspace]
+members = [
+    "pyisolate-cli",
 ]
 
 [tool.ruff]

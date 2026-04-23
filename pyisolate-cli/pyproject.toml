@@ -1,0 +1,29 @@
+[project]
+name = "pyisolate-cli"
+version = "0.1.0"
+description = "Manage isolated environment dependencies."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "typer>=0.20.0",
+    "tomli>=2.4.0; python_version < '3.11'",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "tomli-w>=1.2.0",
+]
+vendor-libs = [
+    "tomli",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.3,<0.9.0"]
+build-backend = "uv_build"
+
+[project.scripts]
+pyisolate-cli = "pyisolate_cli.cli:app"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
