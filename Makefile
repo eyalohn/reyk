@@ -18,7 +18,8 @@ $(specific_libraries_test_libs):
 	uv pip install -r $(specific_libraries_test)/requirements.txt --target $(specific_libraries_test_libs)
 
 test: install install-test-libs
-	uv run pytest -v
+	uv run pytest -v tests/
+	uv run pytest -v pyisolate-cli/tests/
 
 .PHONY: update-dependencies
 update-dependencies: uv
