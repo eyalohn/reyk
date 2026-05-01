@@ -19,7 +19,7 @@ export default function Hero() {
             <span className="text-sm text-opacity-75">Vendor dependencies</span>
           </div>
 
-          <h1 className="text-zinc-800 dark:text-zinc-300 tracking-tight text-2xl font-semibold md:text-3xl max-md:text-pretty">
+          <h1 className="text-zinc-800 dark:text-zinc-300 tracking-tight text-2xl font-semibold md:text-3xl min-md:text-pretty">
             Ship Python libraries without dependency fear.
           </h1>
 
