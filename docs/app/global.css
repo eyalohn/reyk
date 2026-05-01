@@ -2,21 +2,19 @@
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 
-@theme {
+@theme inline {
+  --font-sans: var(--font-geist);
+  --font-mono: var(--font-geist-mono);
   --container-layout: 960px;
-  --color-fd-foreground: #1a1a1a;
-}
-
-.dark {
-  --color-fd-background: #0d0d0d;
 }
 
 .dark #nd-sidebar {
-  @apply bg-[#0a0a0a];
+  @apply bg-fd-background;
 }
 
 @utility bg-grid {
-  background-image: linear-gradient(currentColor 1px, transparent 1px),
+  background-image:
+    linear-gradient(currentColor 1px, transparent 1px),
     linear-gradient(90deg, currentColor 1px, transparent 1px);
   background-size: 32px 32px;
 }

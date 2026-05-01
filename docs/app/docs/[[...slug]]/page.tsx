@@ -9,6 +9,8 @@ import { notFound } from 'next/navigation';
 import { getMDXComponents } from '@/mdx-components';
 import type { Metadata } from 'next';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
+import { Callout } from '@/components/mdx/callout';
+import { CodeBlock, Pre } from '@/components/mdx/codeblock';
 
 export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   const params = await props.params;
@@ -31,6 +33,12 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
           components={getMDXComponents({
             // this allows you to link to other pages with relative file paths
             a: createRelativeLink(source, page),
+            Callout: Callout,
+            pre: ({ ref: _ref, ...props }) => (
+              <CodeBlock {...props}>
+                <Pre>{props.children}</Pre>
+              </CodeBlock>
+            ),
           })}
         />
       </DocsBody>
@@ -43,7 +51,7 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata(
-  props: PageProps<'/docs/[[...slug]]'>
+  props: PageProps<'/docs/[[...slug]]'>,
 ): Promise<Metadata> {
   const params = await props.params;
   const page = source.getPage(params.slug);
