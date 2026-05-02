@@ -18,7 +18,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
-cover/
+coverage/
 
 # Environments
 .venv/

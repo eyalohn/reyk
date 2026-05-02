@@ -18,15 +18,22 @@ $(specific_libraries_test_libs):
 	uv pip install -r $(specific_libraries_test)/requirements.txt --target $(specific_libraries_test_libs)
 
 test-library: install install-test-libs
-	uv run pytest -v tests/
+	mkdir -p coverage
+	uv run coverage run -m pytest -v tests/
 
 test-library-memray: install install-test-libs
 	uv run pytest -v tests/ --memray
 
 test-cli: install install-test-libs
-	uv run pytest -v pyisolate-cli/tests/
+	mkdir -p coverage
+	uv run coverage run -m pytest -v pyisolate-cli/tests/
 
 test: test-library test-cli
+
+.PHONY: testcov  ## Run tests and generate a coverage report
+testcov: test
+	@echo "building coverage html"
+	@uv run coverage html
 
 .PHONY: update-dependencies
 update-dependencies: uv
