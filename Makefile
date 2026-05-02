@@ -16,13 +16,13 @@ $(specific_libraries_test_libs):
 	uv pip install -r $(specific_libraries_test)/requirements.txt --target $(specific_libraries_test_libs)
 
 test-library: install install-test-libs
-	uv run coverage run -m pytest -v tests/
+	uv run coverage run $(COVERAGE_FLAGS) -m pytest -v tests/
 
 test-library-memray: install install-test-libs
 	uv run pytest -v tests/ --memray
 
 test-cli: install install-test-libs
-	uv run coverage run -m pytest -v pyisolate-cli/tests/
+	uv run coverage run $(COVERAGE_FLAGS) -m pytest -v pyisolate-cli/tests/
 
 # The --append flag is needed to combine the coverage data from both test-library and test-cli
 test: install install-test-libs
