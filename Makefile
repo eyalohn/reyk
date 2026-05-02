@@ -8,6 +8,8 @@ uv:
 
 install: uv
 	uv sync --frozen --all-groups --all-extras --all-packages
+
+install-hooks: uv
 	uv run pre-commit install --install-hooks
 
 install-test-libs: $(specific_libraries_test_libs)
@@ -33,7 +35,7 @@ test: install install-test-libs
 
 testcov: test
 	@echo "building coverage html"
-	@uv run coverage html
+	uv run coverage html
 
 update-dependencies: uv
 	uv lock --upgrade
