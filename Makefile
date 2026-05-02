@@ -16,19 +16,20 @@ $(specific_libraries_test_libs):
 	uv pip install -r $(specific_libraries_test)/requirements.txt --target $(specific_libraries_test_libs)
 
 test-library: install install-test-libs
-	mkdir -p coverage
 	uv run coverage run -m pytest -v tests/
 
 test-library-memray: install install-test-libs
 	uv run pytest -v tests/ --memray
 
 test-cli: install install-test-libs
-	mkdir -p coverage
 	uv run coverage run -m pytest -v pyisolate-cli/tests/
 
-# We should run both tests together to get a combined coverage report
+# The --append flag is needed to combine the coverage data from both test-library and test-cli
 test: install install-test-libs
-	uv run coverage run -m pytest -v tests/ -v pyisolate-cli/tests/
+	mkdir -p coverage
+	rm -f coverage/.coverage.*
+	$(MAKE) COVERAGE_FLAGS=--append test-library
+	$(MAKE) COVERAGE_FLAGS=--append test-cli
 
 testcov: test
 	@echo "building coverage html"
