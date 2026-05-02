@@ -6,11 +6,11 @@ specific_libraries_test_libs := $(specific_libraries_test)/test_libs
 uv:
 	@uv -V || echo 'uv is not installed. Install via: https://docs.astral.sh/uv/getting-started/installation/'
 
-install: uv
-	uv sync --frozen --all-groups --all-extras --all-packages
-
 install-hooks: uv
 	uv run pre-commit install --install-hooks
+
+install: uv
+	uv sync --frozen --all-groups --all-extras --all-packages
 
 install-test-libs: $(specific_libraries_test_libs)
 
