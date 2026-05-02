@@ -72,6 +72,7 @@ jobs:
         run: make test-library-memray
 
   coverage-combine:
+    name: Combine coverage
     needs:
       - pytest
     runs-on: ubuntu-latest

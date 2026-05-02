@@ -80,3 +80,4 @@ ignore-words-list = ["pyisolate"]  # Comma-separated
 
 [tool.coverage.run]
 source = ["pyisolate"]
+relative_files = true
