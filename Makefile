@@ -3,11 +3,9 @@
 specific_libraries_test := tests/blackbox/specific_libraries
 specific_libraries_test_libs := $(specific_libraries_test)/test_libs
 
-.PHONY: uv
 uv:
 	@uv -V || echo 'uv is not installed. Install via: https://docs.astral.sh/uv/getting-started/installation/'
 
-.PHONY: install
 install: uv
 	uv sync --frozen --all-groups --all-extras --all-packages
 	uv run pre-commit install --install-hooks
@@ -28,13 +26,13 @@ test-cli: install install-test-libs
 	mkdir -p coverage
 	uv run coverage run -m pytest -v pyisolate-cli/tests/
 
-test: test-library test-cli
+# We should run both tests together to get a combined coverage report
+test: install install-test-libs
+	uv run coverage run -m pytest -v tests/ -v pyisolate-cli/tests/
 
-.PHONY: testcov  ## Run tests and generate a coverage report
 testcov: test
 	@echo "building coverage html"
 	@uv run coverage html
 
-.PHONY: update-dependencies
 update-dependencies: uv
 	uv lock --upgrade
