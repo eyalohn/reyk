@@ -2,7 +2,7 @@ name: Post coverage comment
 
 on: # ignore[dangerous-triggers] -- workflow_run is used safely here; no code checkout occurs
   workflow_run:
-    workflows: ['Tests']
+    workflows: ['Run Tests']
     types:
       - completed
 
