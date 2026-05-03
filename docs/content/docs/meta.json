@@ -2,7 +2,7 @@
   "pages": [
     "[House][Introduction](/docs)",
     "quick-start",
-    "api-reference",
-    "how-it-works"
+    "configuration",
+    "reference"
   ]
 }

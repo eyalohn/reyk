@@ -1,0 +1,63 @@
+---
+title: PyIsolate CLI
+icon: Terminal
+description: Complete reference for the PyIsolate command-line interface.
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+PyIsolate includes a CLI tool for managing vendored dependencies in your projects. Below are the available commands and their usage.
+
+<Callout type="tip">
+  The CLI requires `uv` to be installed and available in your `PATH`. All
+  commands delegate to `uv` under the hood. Install `uv` by following [the
+  instructions here](https://docs.astral.sh/uv/getting-started/installation/).
+</Callout>
+
+## `sync`
+
+Syncing ensures that all project dependencies are installed and up-to-date with the requirements.
+
+```sh
+uvx pyisolate-cli sync
+```
+
+## `add`
+
+Add a new dependency to your project. This command will install the specified package and update your `pyproject.toml` file.
+
+```sh
+uvx pyisolate-cli add [PACKAGES...] [UV_OPTIONS]
+```
+
+### Options
+
+You can pass any arguments [supported by uv](https://docs.astral.sh/uv/reference/cli/#uv-add).
+
+- `--group [GROUP]`: Add the requirements to the specified dependency group. The group must already exist in [your configuration](../configuration). Defaults to `vendor-libs`.
+
+### Example
+
+```sh
+uvx pyisolate-cli add requests~=2.33
+```
+
+## `remove`
+
+Remove an existing dependency from your project. This command will uninstall the specified package and update your `pyproject.toml` file.
+
+```sh
+uvx pyisolate-cli remove [PACKAGES...]
+```
+
+### Options
+
+You can pass any arguments [supported by uv](https://docs.astral.sh/uv/reference/cli/#uv-remove).
+
+- `--group [GROUP]`: Remove the packages from the specified dependency group. The group must already exist in [your configuration](../configuration). Defaults to `vendor-libs`.
+
+### Example
+
+```sh
+uvx pyisolate-cli remove requests
+```

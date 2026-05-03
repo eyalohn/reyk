@@ -74,5 +74,5 @@ venvPath = "."
 venv = ".venv"
 
 [tool.codespell]
-skip = ".git,env*,uv.lock,**/package-lock.json,./tests/blackbox/specific_libraries/test_libs"
+skip = ".git,env*,uv.lock,**/package-lock.json,./tests/blackbox/specific_libraries/test_libs,node_modules"
 ignore-words-list = ["pyisolate"]  # Comma-separated
