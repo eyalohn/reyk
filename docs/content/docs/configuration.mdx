@@ -1,0 +1,71 @@
+---
+title: Configuration
+description: Configure how PyIsolate vendors and isolates dependencies.
+icon: FileSliders
+---
+
+PyIsolate has two configuration surfaces: `pyproject.toml` that controls how the CLI vendors dependencies,
+and parameters on the `isolate_package()` function that control how isolation is applied at runtime.
+
+## `pyproject.toml` configuration
+
+Add a `[tool.pyisolate]` section to your `pyproject.toml`:
+
+```toml
+[tool.pyisolate]
+libraries-path = "libs"
+vendor-groups = ["vendor-libs"]
+```
+
+All fields are optional and fall back to their defaults if omitted.
+
+### Options
+
+- **`libraries-path`** (string, default: `"libs"`): Relative path where vendored libraries are installed.
+- **`vendor-groups`** (array of strings, default: `["vendor-libs"]`): A list of ` [dependency-groups]` whose packages should be vendored.
+
+## `isolate_package()` configuration
+
+`isolate_package()` is called in your package's **init**.py and installs the import hook at runtime. It accepts two optional parameters:
+
+```py
+def isolate_package(
+    package_path: Optional[Path] = None,
+    vendorized_libs_dir_name: str = "libs",
+) -> None:
+```
+
+### Parameters
+
+- **`package_path`** (`Path | None`, default: `None`): The path to the package to isolate. When `None`, PyIsolate automatically detects the directory of the file that called isolate_package(). In almost all cases you can omit this parameter.
+- **`vendorized_libs_dir_name`** (string, default: `"libs"`): The name of the subdirectory inside your package where vendored libraries are stored. This must match the `libraries-path` value in `pyproject.toml`.
+
+## Examples
+
+Calling with all defaults - the common case:
+
+```py
+from pyisolate.isolator import isolate_package
+
+isolate_package()
+```
+
+Calling with a custom libs directory name:
+
+```py
+from pyisolate.isolator import isolate_package
+
+isolate_package(vendorized_libs_dir_name="vendor")
+```
+
+```toml
+[tool.pyisolate]
+libraries-path = "vendor"
+```
+
+## Keeping both surfaces in sync
+
+The `libraries-path` option in `pyproject.toml` and the `vendorized_libs_dir_name` parameter in `isolate_package()` refer to the same directory.
+
+If these two values do not match, the CLI will vendor packages into one directory while the runtime hook looks in a different directory.
+Remember to change both values together.
