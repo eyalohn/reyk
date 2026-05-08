@@ -79,5 +79,7 @@ skip = ".git,env*,uv.lock,**/package-lock.json,./tests/blackbox/specific_librari
 ignore-words-list = ["pyisolate"]  # Comma-separated
 
 [tool.coverage.run]
-source = ["pyisolate"]
+source = ["pyisolate", "pyisolate-cli/src"]
 relative_files = true
+branch = true
+data_file = "coverage/.coverage"
