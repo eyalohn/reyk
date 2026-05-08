@@ -1,5 +1,7 @@
 # PyIsolate
 
+[![Tests](https://github.com/OughtToPrevail/PyIsolate/actions/workflows/test.yml/badge.svg)](https://github.com/OughtToPrevail/PyIsolate/actions/workflows/test.yml)
+
 **PyIsolate** enables code inside your package to import vendored libraries while code outside your package continues using the system/global versions.
 
 We leverage Python's import system internals to achieve transparent dependency isolation.

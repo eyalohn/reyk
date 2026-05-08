@@ -8,6 +8,7 @@ dependencies = []
 
 [dependency-groups]
 dev = [
+    "coverage[toml]>=7.10.7",
     "pre-commit>=4.3.0",
     "pytest>=8.4.2",
 ]
@@ -74,5 +75,9 @@ venvPath = "."
 venv = ".venv"
 
 [tool.codespell]
-skip = ".git,env*,uv.lock,**/package-lock.json,./tests/blackbox/specific_libraries/test_libs,node_modules"
+skip = ".git,env*,uv.lock,**/package-lock.json,./tests/blackbox/specific_libraries/test_libs,node_modules,htmlcov"
 ignore-words-list = ["pyisolate"]  # Comma-separated
+
+[tool.coverage.run]
+source = ["pyisolate"]
+relative_files = true
