@@ -1,7 +1,9 @@
 import sys
 from collections.abc import Iterable
+from pathlib import Path
 import pytest
 
+from pyisolate.isolator import isolate_package
 from pyisolate.vendor_importer import get_installed_vendor_importer
 from tests.blackbox.libraries_manager import LibrariesManager
 from tests.blackbox.project_paths import (
@@ -12,10 +14,19 @@ from tests.blackbox.project_paths import (
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="package", autouse=True)
 def install_project_in_path() -> None:
-    # Tests will be able to import as if  in the example project
+    # Tests will be able to import as if in the example project
     sys.path.insert(0, str(EXAMPLE_PROJECT_PATH.parent))
+
+
+@pytest.fixture(scope="package", autouse=True)
+def setup_vendor_importer() -> Iterable[None]:
+    isolate_package(Path("./example_project").resolve())
+    yield
+    vendor_importer = get_installed_vendor_importer()
+    assert vendor_importer is not None
+    vendor_importer.uninstall()
 
 
 @pytest.fixture
@@ -39,7 +50,7 @@ def libraries_manager() -> Iterable[LibrariesManager]:
     libraries_manager.cleanup_libraries_dir()
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="package", autouse=True)
 def import_example_project(install_project_in_path: None) -> None:  # noqa: ARG001
     # This is crucial to happen before `clear_imported_modules_cache` as it will isolate
     # the project every test as the `__init__` will be reloaded (as its removed from sys modules)

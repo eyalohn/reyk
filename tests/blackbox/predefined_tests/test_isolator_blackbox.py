@@ -342,6 +342,12 @@ def test_file_attribute_correct(files_manager: ExampleProjectFileManager) -> Non
     assert Path(MY_FILE_PATH) == expected_module_path
 
 
+def test_import_non_existent_module(files_manager: ExampleProjectFileManager) -> None:
+    files_manager.create_project_module(module_name="module", content="import fake_module")
+    with pytest.raises(ModuleNotFoundError):
+        import example_project.module
+
+
 def _assert_my_string_in_module() -> None:
     import example_project.module
 

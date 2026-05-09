@@ -83,3 +83,9 @@ source = ["pyisolate", "pyisolate-cli/src"]
 relative_files = true
 branch = true
 data_file = "coverage/.coverage"
+
+[tool.coverage.lcov]
+output = "coverage/coverage.lcov"
+
+[tool.coverage.html]
+directory = "coverage/htmlcov/coverage.lcov"
