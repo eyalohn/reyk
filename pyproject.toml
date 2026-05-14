@@ -1,7 +1,7 @@
 [project]
 name = "pyisolate"
 version = "0.1.0"
-description = "Transparent dependency isolation for Python packages using vendored libraries."
+description = "Run conflicting Python dependencies in one process — with vendored isolation."
 authors = [
     { name = 'Eyal Ohn', email = 'eyal.ohn@gmail.com' },
     { name = 'Ofek Ashery', email = 'ofek.ashery@gmail.com' },
