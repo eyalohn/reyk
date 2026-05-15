@@ -36,7 +36,7 @@ export default function Hero() {
               Get Started
             </Link>
             <a
-              href="https://github.com/OughtToPrevail/reyk"
+              href="https://github.com/eyalohn/reyk"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-fd-secondary text-fd-secondary-foreground border font-medium text-sm text-center px-5 py-2.5 rounded-full no-underline"

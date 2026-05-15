@@ -1,7 +1,7 @@
 # Reyk
 
-[![Tests](https://github.com/OughtToPrevail/reyk/actions/workflows/test.yml/badge.svg)](https://github.com/OughtToPrevail/reyk/actions/workflows/test.yml)
-[![Coverage](https://coverage-badge.samuelcolvin.workers.dev/OughtToPrevail/reyk.svg)](https://coverage-badge.samuelcolvin.workers.dev/redirect/OughtToPrevail/reyk)
+[![Tests](https://github.com/eyalohn/reyk/actions/workflows/test.yml/badge.svg)](https://github.com/eyalohn/reyk/actions/workflows/test.yml)
+[![Coverage](https://coverage-badge.samuelcolvin.workers.dev/eyalohn/reyk.svg)](https://coverage-badge.samuelcolvin.workers.dev/redirect/eyalohn/reyk)
 [![Latest Version](https://img.shields.io/pypi/v/reyk.svg)](https://pypi.python.org/pypi/reyk/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/reyk.svg)](https://pypi.python.org/pypi/reyk/)
 [![llms.txt](https://img.shields.io/badge/llms.txt-green)](https://reyk.dev/llms-full.txt)
