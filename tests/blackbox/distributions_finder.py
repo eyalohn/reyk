@@ -1,4 +1,5 @@
 # pyright: reportMissingImports=false
+import sys
 from importlib.metadata import Distribution
 
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
@@ -36,5 +37,8 @@ def find_distributions_from_library(files_manager: ExampleProjectFileManager) ->
 
 
 def assert_distribution_names(distributions: list[Distribution], expected_distributions: set[str]) -> None:
-    distribution_names = {distribution.name for distribution in distributions}
+    if sys.version_info >= (3, 10):
+        distribution_names = {distribution.name for distribution in distributions}
+    else:
+        distribution_names = {distribution.metadata["Name"] for distribution in distributions}
     assert distribution_names == expected_distributions
