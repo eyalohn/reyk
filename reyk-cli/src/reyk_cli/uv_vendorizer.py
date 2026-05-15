@@ -3,14 +3,14 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import typer
+
 from reyk_cli.command_executor import run_command_exit_on_fail
 
 LOCK_FILE_NAME = "vendor.lock"
 
 
 class UVBasedVendorizer:
-    def __init__(self, project_root: Path, vendor_groups: set[str], libraries_target_path: Path) -> None:
-        self._project_root = project_root
+    def __init__(self, vendor_groups: set[str], libraries_target_path: Path) -> None:
         self._vendor_groups = vendor_groups
         self._libraries_target_path = libraries_target_path
 
@@ -66,4 +66,4 @@ class UVBasedVendorizer:
 
     @property
     def lock_file_path(self) -> Path:
-        return self._project_root / LOCK_FILE_NAME
+        return self._libraries_target_path / LOCK_FILE_NAME

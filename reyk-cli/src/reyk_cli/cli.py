@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Annotated, cast
 
 import typer
+
 from reyk_cli.configuration_reader import DEFAULT_VENDOR_GROUP, read_reyk_configuration
 from reyk_cli.uv_vendorizer import UVBasedVendorizer
 
@@ -32,7 +33,6 @@ def main(
 ) -> None:
     reyk_config = read_reyk_configuration(config)
     ctx.obj = UVBasedVendorizer(
-        project_root=config.parent,
         vendor_groups=reyk_config.vendor_groups,
         libraries_target_path=Path(reyk_config.libraries_path),
     )
