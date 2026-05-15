@@ -15,7 +15,9 @@ install: uv
 install-test-libs: $(specific_libraries_test_libs)
 
 $(specific_libraries_test_libs):
-	uv pip install -r $(specific_libraries_test)/requirements.txt --target $(specific_libraries_test_libs)
+	CLI_PATH="$$(pwd)/pyisolate-cli"; \
+	cd $(specific_libraries_test); \
+	uvx "$$CLI_PATH" sync
 
 test-library: install install-test-libs
 	uv run coverage run $(COVERAGE_FLAGS) -m pytest -v tests/
