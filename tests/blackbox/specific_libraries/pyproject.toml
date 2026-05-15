@@ -1,0 +1,16 @@
+[project]
+name = "pyisolate-test-specific-libraries"
+version = "0.0.0"
+dependencies = []
+
+[dependency-groups]
+vendor-libs = [
+    "pydantic~=2.12",
+    "aiormq~=6.9",
+    "pika~=1.3",
+    "pymongo~=4.15",
+    "protobuf~=6.32",
+]
+
+[tool.pyisolate]
+libraries-path = "test_libs"

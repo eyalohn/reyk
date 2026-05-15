@@ -30,6 +30,7 @@ coverage.lcov
 # Tests
 tests/blackbox/locked_files_pending_deletion/
 tests/blackbox/specific_libraries/test_libs
+tests/blackbox/specific_libraries/vendor.lock
 
 # Docs
 .vercel
