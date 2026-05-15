@@ -99,7 +99,7 @@ venv = ".venv"
 
 [tool.codespell]
 skip = ".git,env*,uv.lock,**/package-lock.json,./tests/blackbox/specific_libraries/test_libs,node_modules,htmlcov"
-ignore-words-list = ["pyisolate"]                                                                                  # Comma-separated
+ignore-words-list = ["pyisolate"]
 
 [tool.coverage.run]
 source = ["pyisolate"]
