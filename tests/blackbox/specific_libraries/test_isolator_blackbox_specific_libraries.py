@@ -92,15 +92,16 @@ def test_select_opentelemetry_entry_points(
     distributions_finder: Callable[[], list[Distribution]],
 ) -> None:
     distributions = distributions_finder()
-    opentelemetry_sdk_distribution = next(d for d in distributions if "opentelemetry-sdk" in d.name)
 
     if sys.version_info >= (3, 10):
+        opentelemetry_sdk_distribution = next(d for d in distributions if "opentelemetry-sdk" in d.name)
         console_entry_points = list(
             opentelemetry_sdk_distribution.entry_points.select(
                 value="opentelemetry.sdk._logs.export:ConsoleLogRecordExporter"  # Arbitrary entrypoint
             )
         )
     else:
+        opentelemetry_sdk_distribution = next(d for d in distributions if "opentelemetry-sdk" in d.metadata["Name"])
         # Entry points API has changed in Python 3.10
         console_entry_points = [
             entry_point
