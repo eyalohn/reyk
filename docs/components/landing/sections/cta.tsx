@@ -8,8 +8,8 @@ export const CTASection = () => {
           Ready to end the dependency hell?
         </h2>
         <p className="max-w-lg text-fd-muted-foreground">
-          PyIsolate is open source and ready for production. Start isolating
-          your dependencies in minutes.
+          Reyk is open source and ready for production. Start isolating your
+          dependencies in minutes.
         </p>
         <div className="flex gap-4 mt-4">
           <Link

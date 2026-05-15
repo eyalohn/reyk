@@ -1,12 +1,13 @@
 import pytest
-from typer.testing import CliRunner
-from pyisolate_cli.cli import app
-from pyisolate_cli.configuration_reader import (
+from reyk_cli.cli import app
+from reyk_cli.configuration_reader import (
     DEFAULT_LIBRARIES_TARGET_PATH,
     DEFAULT_VENDOR_GROUP,
     DEFAULT_VENDOR_GROUPS,
-    PyIsolateConfiguration,
+    ReykConfiguration,
 )
+from typer.testing import CliRunner
+
 from tests.example_project import ExampleProject
 
 
@@ -50,7 +51,7 @@ def test_add_to_unrelated_group(runner: CliRunner, example_project: ExampleProje
     assert result.exit_code == 0
     result = runner.invoke(app, ["add", "tomli-w", "--group", "unrelated-group"])
     assert result.exit_code != 0, (
-        "Adding to a group with pyisolate-cli that isn't in 'vendor-groups' should result in an error"
+        "Adding to a group with reyk-cli that isn't in 'vendor-groups' should result in an error"
     )
 
     assert example_project.get_existing_libraries() == {"tomli"}
@@ -58,7 +59,7 @@ def test_add_to_unrelated_group(runner: CliRunner, example_project: ExampleProje
 
 @pytest.mark.parametrize(
     "example_project",
-    [PyIsolateConfiguration(DEFAULT_LIBRARIES_TARGET_PATH, {DEFAULT_VENDOR_GROUP, "another-vendored-group"})],
+    [ReykConfiguration(DEFAULT_LIBRARIES_TARGET_PATH, {DEFAULT_VENDOR_GROUP, "another-vendored-group"})],
     indirect=True,
 )
 def test_add_to_new_vendor_groups(runner: CliRunner, example_project: ExampleProject) -> None:
@@ -72,7 +73,7 @@ def test_add_to_new_vendor_groups(runner: CliRunner, example_project: ExamplePro
 
 @pytest.mark.parametrize(
     "example_project",
-    [PyIsolateConfiguration(DEFAULT_LIBRARIES_TARGET_PATH, {"different-vendored-group"})],
+    [ReykConfiguration(DEFAULT_LIBRARIES_TARGET_PATH, {"different-vendored-group"})],
     indirect=True,
 )
 def test_change_vendor_libs(runner: CliRunner, example_project: ExampleProject) -> None:
@@ -90,7 +91,7 @@ def test_sync_no_vendor_groups(runner: CliRunner, example_project: ExampleProjec
 
 @pytest.mark.parametrize(
     "example_project",
-    [PyIsolateConfiguration("different_libs", DEFAULT_VENDOR_GROUPS)],
+    [ReykConfiguration("different_libs", DEFAULT_VENDOR_GROUPS)],
     indirect=True,
 )
 def test_change_vendor_target(runner: CliRunner, example_project: ExampleProject) -> None:

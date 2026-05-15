@@ -1,4 +1,4 @@
-# PyIsolate Documentation
+# Reyk Documentation
 
 This is a Next.js application generated with [Fumadocs](https://github.com/fuma-nama/fumadocs).
 

@@ -36,7 +36,7 @@ export default function Hero() {
               Get Started
             </Link>
             <a
-              href="https://github.com/OughtToPrevail/PyIsolate"
+              href="https://github.com/OughtToPrevail/reyk"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-fd-secondary text-fd-secondary-foreground border font-medium text-sm text-center px-5 py-2.5 rounded-full no-underline"
