@@ -19,6 +19,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 coverage/
+coverage.lcov
 
 # Environments
 .venv/

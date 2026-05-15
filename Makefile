@@ -30,10 +30,13 @@ test-cli: install install-test-libs
 test: install install-test-libs
 	mkdir -p coverage
 	rm -f coverage/.coverage.*
-	$(MAKE) COVERAGE_FLAGS=--append test-library
-	$(MAKE) COVERAGE_FLAGS=--append test-cli
+	"$(MAKE)" COVERAGE_FLAGS=--append test-library
+	"$(MAKE)" COVERAGE_FLAGS=--append test-cli
 
 testcov: test
+	uv run coverage report
+	@echo "building coverage lcov"
+	uv run coverage lcov
 	@echo "building coverage html"
 	uv run coverage html
 

@@ -89,6 +89,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**/test_*.py" = ["SLF001", "PLC0415", "F401"]
 "tests/**/conftest.py" = ["SLF001", "PLC0415", "F401"]
+"tests/blackbox/distributions_finder.py" = ["SLF001", "PLC0415", "F401"]
 "pyisolate/vendor_importer.py" = ["A002"]
 
 [tool.pyright]
@@ -102,5 +103,13 @@ skip = ".git,env*,uv.lock,**/package-lock.json,./tests/blackbox/specific_librari
 ignore-words-list = ["pyisolate"]
 
 [tool.coverage.run]
-source = ["pyisolate"]
+source = ["pyisolate", "pyisolate-cli/src"]
 relative_files = true
+branch = true
+data_file = "coverage/.coverage"
+
+[tool.coverage.lcov]
+output = "coverage/coverage.lcov"
+
+[tool.coverage.html]
+directory = "coverage/htmlcov/coverage.lcov"

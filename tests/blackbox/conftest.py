@@ -1,7 +1,11 @@
 import sys
-from collections.abc import Iterable
+from collections.abc import Iterable, Callable
+from pathlib import Path
+import functools
+from importlib.metadata import Distribution
 import pytest
 
+from pyisolate.isolator import isolate_package
 from pyisolate.vendor_importer import get_installed_vendor_importer
 from tests.blackbox.libraries_manager import LibrariesManager
 from tests.blackbox.project_paths import (
@@ -10,12 +14,25 @@ from tests.blackbox.project_paths import (
     TEST_LIBRARIES_DIRECTORY_PATH,
 )
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
+from tests.blackbox.distributions_finder import find_distributions_from_project, find_distributions_from_library
 
 
-@pytest.fixture(scope="session", autouse=True)
-def install_project_in_path() -> None:
-    # Tests will be able to import as if  in the example project
-    sys.path.insert(0, str(EXAMPLE_PROJECT_PATH.parent))
+@pytest.fixture(scope="package", autouse=True)
+def install_project_in_path() -> Iterable[None]:
+    # Tests will be able to import as if in the example project
+    project_path_parent = str(EXAMPLE_PROJECT_PATH.parent)
+    sys.path.insert(0, project_path_parent)
+    yield
+    sys.path.remove(project_path_parent)
+
+
+@pytest.fixture(scope="package", autouse=True)
+def setup_vendor_importer() -> Iterable[None]:
+    isolate_package(Path(__file__).parent / "example_project")
+    yield
+    vendor_importer = get_installed_vendor_importer()
+    assert vendor_importer is not None
+    vendor_importer.uninstall()
 
 
 @pytest.fixture
@@ -39,10 +56,23 @@ def libraries_manager() -> Iterable[LibrariesManager]:
     libraries_manager.cleanup_libraries_dir()
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(
+    params=[
+        pytest.param(find_distributions_from_project, id="Find distributions inside project module"),
+        pytest.param(find_distributions_from_library, id="Find distributions inside library module"),
+    ]
+)
+def distributions_finder(
+    request: pytest.FixtureRequest,
+    files_manager: ExampleProjectFileManager,
+) -> Callable[[], list[Distribution]]:
+    return functools.partial(request.param, files_manager)
+
+
+@pytest.fixture(scope="package", autouse=True)
 def import_example_project(install_project_in_path: None) -> None:  # noqa: ARG001
     # This is crucial to happen before `clear_imported_modules_cache` as it will isolate
-    # the project every test as the `__init__` will be reloaded (as its removed from sys modules)
+    # the project every test as the `__init__` will be reloaded (because its removed from sys modules)
 
     import example_project
 
@@ -50,7 +80,7 @@ def import_example_project(install_project_in_path: None) -> None:  # noqa: ARG0
 @pytest.fixture(autouse=True)
 def clear_vendorized_modules_cache() -> None:
     # Must be before `clear_sys_imported_modules_cache` because by clearing the cache
-    # it also returns the removed `sys.modules` back (returns to an unvendorized state)
+    # it also returns the removed `sys.modules` back (returns to an non-vendorized state)
     vendor_importer = get_installed_vendor_importer()
     if vendor_importer is not None:
         vendor_importer.clear_vendorized_cache()

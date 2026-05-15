@@ -1,7 +1,10 @@
 # pyright: reportMissingImports=false
+from collections.abc import Callable
 from pathlib import Path
 import sys
+from importlib.metadata import Distribution
 import pytest
+from tests.blackbox.distributions_finder import assert_distribution_names
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 from tests.blackbox.libraries_manager import LibrariesManager
 from tests.blackbox.predefined_tests.variable_access_statement_generator import (
@@ -340,6 +343,31 @@ def test_file_attribute_correct(files_manager: ExampleProjectFileManager) -> Non
 
     expected_module_path = EXAMPLE_PROJECT_LIBRARIES_PATH / library_name / f"{library_module_name}.py"
     assert Path(MY_FILE_PATH) == expected_module_path
+
+
+def test_import_non_existent_module(files_manager: ExampleProjectFileManager) -> None:
+    files_manager.create_project_module(module_name="module", content="import fake_module")
+    with pytest.raises(ModuleNotFoundError):
+        import example_project.module
+
+
+@pytest.mark.parametrize(
+    "library_names",
+    [
+        pytest.param(set(), id="No libraries"),
+        pytest.param({"example_library", "another_example_library"}, id="Two libraries"),
+    ],
+)
+def test_find_distributions(
+    files_manager: ExampleProjectFileManager,
+    library_names: set[str],
+    distributions_finder: Callable[[], list[Distribution]],
+) -> None:
+    for library_name in library_names:
+        files_manager.create_fake_dist_info(library_name)
+
+    distributions = distributions_finder()
+    assert_distribution_names(distributions, library_names)
 
 
 def _assert_my_string_in_module() -> None:

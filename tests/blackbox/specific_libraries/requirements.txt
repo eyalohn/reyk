@@ -3,3 +3,4 @@ aiormq~=6.9
 pika~=1.3
 pymongo~=4.15
 protobuf~=6.32
+opentelemetry-sdk~=1.41

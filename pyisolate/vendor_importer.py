@@ -40,14 +40,14 @@ class VendorImporter(DistributionFinder):
     def __init__(
         self,
         package_name: str,
-        vendorized_libs_dir_name: str,
+        vendorized_libs_relative_import_path: str,
         vendorized_libs_path: Path,
         original_builtins_import_method: BuiltinsImporter,
         original_importlib_import_method: ImportLibImporter,
     ) -> None:
-        self._package_name = package_name
-        self._vendorized_libs_dir_name = vendorized_libs_dir_name
-        self._vendorized_libs_path = vendorized_libs_path
+        self.package_name = package_name
+        self.vendorized_libs_relative_import_path = vendorized_libs_relative_import_path
+        self.vendorized_libs_path = vendorized_libs_path
         self._original_builtins_import_method = original_builtins_import_method
         self._original_importlib_import_method = original_importlib_import_method
         self._sys_modules_state_handler = SysModulesStateHandler()
@@ -199,18 +199,17 @@ class VendorImporter(DistributionFinder):
             return False
 
         if name.startswith(self.vendor_prefix):
-            # Cannot import actual path - another metapath finder should do that
             LOGGER.debug(
                 "The attempted import is already for a vendorized package therefore there's "
                 "no need to change the import path"
             )
             return False
 
-        if name == self._package_name:
-            LOGGER.debug(f"Cannot re-import the library: {self._package_name}")
+        if name == self.package_name:
+            LOGGER.debug(f"Cannot re-import the library: {self.package_name}")
             return False
 
-        if not is_caller_part_of_library(self._package_name):
+        if not is_caller_part_of_library(self.package_name):
             LOGGER.debug("Cannot import because it's not part of library")
             return False
 
@@ -224,17 +223,17 @@ class VendorImporter(DistributionFinder):
             context = DistributionFinder.Context()
 
         LOGGER.debug(f"Finding distributions in VendorImporter for context: {context}")
-        if not is_caller_part_of_library(self._package_name):
+        if not is_caller_part_of_library(self.package_name):
             LOGGER.debug("Returning empty list in find_distributions because not part of library")
             return []
 
-        LOGGER.debug(f"Returning all distributions in vendorized path: {self._vendorized_libs_path}")
-        vars(context).update({"path": [str(self._vendorized_libs_path)]})
+        LOGGER.debug(f"Returning all distributions in vendorized path: {self.vendorized_libs_path}")
+        vars(context).update({"path": [str(self.vendorized_libs_path)]})
         return MetadataPathFinder.find_distributions(context)
 
     @property
     def vendor_prefix(self) -> str:
-        return f"{self._package_name}.{self._vendorized_libs_dir_name}"
+        return f"{self.package_name}.{self.vendorized_libs_relative_import_path}"
 
     def install(self) -> None:
         builtins.__import__ = self.builtins_import_override
@@ -244,6 +243,8 @@ class VendorImporter(DistributionFinder):
             sys.meta_path.append(self)
 
     def uninstall(self) -> None:
+        self._sys_modules_state_handler.remove_vendorized_sys_modules()
+        self._sys_modules_state_handler.clear_state()
         builtins.__import__ = self._original_builtins_import_method
         importlib.import_module = self._original_importlib_import_method
         if self in sys.meta_path:
