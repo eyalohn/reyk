@@ -1,6 +1,4 @@
 {
-    "python.testing.pytestEnabled": true,
-    "python.analysis.extraPaths": [
-        "./pyisolate-cli/src"
-    ],
+  "python.testing.pytestEnabled": true,
+  "python.analysis.extraPaths": ["./reyk-cli/src"]
 }

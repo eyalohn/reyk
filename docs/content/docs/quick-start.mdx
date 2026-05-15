@@ -1,20 +1,20 @@
 ---
 title: Quick Start
-description: Learn how to install and configure PyIsolate in your project.
+description: Learn how to install and configure Reyk in your project.
 icon: Rocket
 ---
 
 ## Installation
 
 <Callout>
-  PyIsolate uses [uv](https://docs.astral.sh/uv) (v0.6.6>=) for package
+  Reyk uses [uv](https://docs.astral.sh/uv) (v0.6.6>=) for package
   management. Make sure you have uv installed and initialized in your project.
 </Callout>
 
-Install PyIsolate from PyPI:
+Install Reyk from PyPI:
 
 ```bash
-uv add pyisolate
+uv add reyk
 ```
 
 ## Basic Setup
@@ -22,7 +22,7 @@ uv add pyisolate
 Enable isolation from your package's `__init__.py`:
 
 ```python
-from pyisolate.isolator import isolate_package
+from reyk.isolator import isolate_package
 
 isolate_package()
 ```
@@ -42,22 +42,22 @@ libs = [
 ]
 ```
 
-The easiest way to manage vendored dependencies is using the [PyIsolate CLI](../reference/cli).:
+The easiest way to manage vendored dependencies is using the [Reyk CLI](../reference/cli).:
 
 ```bash
 # Add dependencies
-uvx pyisolate-cli add requests==2.32.3 pydantic~=1.10
+uvx reyk-cli add requests==2.32.3 pydantic~=1.10
 
 # Remove dependencies
-uvx pyisolate-cli remove opentelemetry-sdk
+uvx reyk-cli remove opentelemetry-sdk
 
 # Vendor dependencies into your package
-uvx pyisolate-cli vendor
+uvx reyk-cli vendor
 ```
 
 ## Project Layout
 
-A minimal PyIsolate-enabled package looks like this:
+A minimal Reyk-enabled package looks like this:
 
 ```
 your_package/
@@ -76,17 +76,17 @@ You may be interested:
 <Cards>
   <Card
     title="Examples & Use Cases"
-    description="Explore practical examples and use cases for PyIsolate."
+    description="Explore practical examples and use cases for Reyk."
     href="/docs/examples"
   />
   <Card
     title="API Reference"
-    description="Detailed documentation of PyIsolate's API and CLI."
+    description="Detailed documentation of Reyk's API and CLI."
     href="/docs/api-reference"
   />
   <Card
-    title="How PyIsolate Works"
-    description="Understand the import mechanics behind PyIsolate."
+    title="How Reyk Works"
+    description="Understand the import mechanics behind Reyk."
     href="/docs/how-it-works/understanding-imports"
   />
 </Cards>

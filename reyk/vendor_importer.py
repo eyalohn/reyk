@@ -1,16 +1,16 @@
 import builtins
-import importlib
-import sys
-from types import ModuleType
-from typing import Protocol, Optional
-from collections.abc import Sequence, Iterable, Mapping
-from pathlib import Path
 import functools
+import importlib
 import logging
+import sys
+from collections.abc import Iterable, Mapping, Sequence
 from importlib.metadata import Distribution, DistributionFinder, MetadataPathFinder
-from pyisolate.caller_finder import is_caller_part_of_library
-from pyisolate.sys_modules_state_handler import SysModulesStateHandler
+from pathlib import Path
+from types import ModuleType
+from typing import Optional, Protocol
 
+from reyk.caller_finder import is_caller_part_of_library
+from reyk.sys_modules_state_handler import SysModulesStateHandler
 
 LOGGER = logging.getLogger(__name__)
 

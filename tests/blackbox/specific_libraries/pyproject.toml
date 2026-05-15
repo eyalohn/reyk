@@ -1,5 +1,5 @@
 [project]
-name = "pyisolate-test-specific-libraries"
+name = "reyk-test-specific-libraries"
 version = "0.0.0"
 dependencies = []
 
@@ -12,5 +12,5 @@ vendor-libs = [
     "protobuf~=6.32",
 ]
 
-[tool.pyisolate]
+[tool.reyk]
 libraries-path = "test_libs"

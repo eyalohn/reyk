@@ -1,12 +1,12 @@
 from pathlib import Path
 from typing import Any, Optional
+
 import tomli_w
-from pyisolate_cli.configuration_reader import (
+from reyk_cli.configuration_reader import (
     DEFAULT_LIBRARIES_TARGET_PATH,
     DEFAULT_VENDOR_GROUPS,
-    PyIsolateConfiguration,
+    ReykConfiguration,
 )
-
 
 PYPROJECT_TOML_NAME = "pyproject.toml"
 DIST_INFO_SUBSTRING = "dist-info"
@@ -23,10 +23,10 @@ PYPROJECT_EXAMPLE: dict[str, Any] = {
 
 
 class ExampleProject:
-    def __init__(self, project_path: Path, configuration: Optional[PyIsolateConfiguration]) -> None:
+    def __init__(self, project_path: Path, configuration: Optional[ReykConfiguration]) -> None:
         self._project_path = project_path
         self._configuration = (
-            PyIsolateConfiguration(DEFAULT_LIBRARIES_TARGET_PATH, DEFAULT_VENDOR_GROUPS)
+            ReykConfiguration(DEFAULT_LIBRARIES_TARGET_PATH, DEFAULT_VENDOR_GROUPS)
             if configuration is None
             else configuration
         )
@@ -39,7 +39,7 @@ class ExampleProject:
             or self._configuration.vendor_groups != DEFAULT_VENDOR_GROUPS
         ):
             pyproject["tool"] = {
-                "pyisolate": {
+                "reyk": {
                     "libraries-path": self._configuration.libraries_path,
                     "vendor-groups": list(self._configuration.vendor_groups),
                 },

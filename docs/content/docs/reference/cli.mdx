@@ -1,12 +1,12 @@
 ---
-title: PyIsolate CLI
+title: Reyk CLI
 icon: Terminal
-description: Complete reference for the PyIsolate command-line interface.
+description: Complete reference for the Reyk command-line interface.
 ---
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-PyIsolate includes a CLI tool for managing vendored dependencies in your projects. Below are the available commands and their usage.
+Reyk includes a CLI tool for managing vendored dependencies in your projects. Below are the available commands and their usage.
 
 <Callout type="tip">
   The CLI requires `uv` to be installed and available in your `PATH`. All
@@ -19,7 +19,7 @@ PyIsolate includes a CLI tool for managing vendored dependencies in your project
 Syncing ensures that all project dependencies are installed and up-to-date with the requirements.
 
 ```sh
-uvx pyisolate-cli sync
+uvx reyk-cli sync
 ```
 
 ## `add`
@@ -27,7 +27,7 @@ uvx pyisolate-cli sync
 Add a new dependency to your project. This command will install the specified package and update your `pyproject.toml` file.
 
 ```sh
-uvx pyisolate-cli add [PACKAGES...] [UV_OPTIONS]
+uvx reyk-cli add [PACKAGES...] [UV_OPTIONS]
 ```
 
 ### Options
@@ -39,7 +39,7 @@ You can pass any arguments [supported by uv](https://docs.astral.sh/uv/reference
 ### Example
 
 ```sh
-uvx pyisolate-cli add requests~=2.33
+uvx reyk-cli add requests~=2.33
 ```
 
 ## `remove`
@@ -47,7 +47,7 @@ uvx pyisolate-cli add requests~=2.33
 Remove an existing dependency from your project. This command will uninstall the specified package and update your `pyproject.toml` file.
 
 ```sh
-uvx pyisolate-cli remove [PACKAGES...]
+uvx reyk-cli remove [PACKAGES...]
 ```
 
 ### Options
@@ -59,5 +59,5 @@ You can pass any arguments [supported by uv](https://docs.astral.sh/uv/reference
 ### Example
 
 ```sh
-uvx pyisolate-cli remove requests
+uvx reyk-cli remove requests
 ```

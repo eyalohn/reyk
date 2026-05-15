@@ -1,22 +1,23 @@
 # pyright: reportMissingImports=false
-from collections.abc import Callable
-from pathlib import Path
 import sys
+from collections.abc import Callable
 from importlib.metadata import Distribution
+from pathlib import Path
+
 import pytest
+
 from tests.blackbox.distributions_finder import assert_distribution_names
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 from tests.blackbox.libraries_manager import LibrariesManager
 from tests.blackbox.predefined_tests.variable_access_statement_generator import (
-    generate_variable_access_statement_params,
-    ALL_IMPORT_TECHNIQUES_BUT_RELATIVE,
     ALL_IMPORT_TECHNIQUES,
+    ALL_IMPORT_TECHNIQUES_BUT_RELATIVE,
+    generate_variable_access_statement_params,
 )
 from tests.blackbox.project_paths import EXAMPLE_PROJECT_LIBRARIES_PATH
 
-
 # Terminology:
-# Project - Isolated project that uses PyIsolate
+# Project - Isolated project that uses Reyk
 # Library - a library that the project uses
 
 # Note: We are able to import inside the example project because of

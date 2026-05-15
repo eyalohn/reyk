@@ -2,13 +2,14 @@ import builtins
 import importlib
 import sys
 from pathlib import Path
-from pyisolate.caller_finder import get_caller_frame_outside_pyisolate
-from pyisolate.vendor_importer import VendorImporter, get_installed_vendor_importer
-from pyisolate.isolator import create_vendor_importer, isolate_package
+
+from reyk.caller_finder import get_caller_frame_outside_reyk
+from reyk.isolator import create_vendor_importer, isolate_package
+from reyk.vendor_importer import VendorImporter, get_installed_vendor_importer
 
 
 def test_get_caller() -> None:
-    caller = get_caller_frame_outside_pyisolate()
+    caller = get_caller_frame_outside_reyk()
     assert caller.module_name == "tests.internals.test_internals"
 
 

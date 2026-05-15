@@ -15,7 +15,7 @@ install: uv
 install-test-libs: $(specific_libraries_test_libs)
 
 $(specific_libraries_test_libs):
-	CLI_PATH="$$(pwd)/pyisolate-cli"; \
+	CLI_PATH="$$(pwd)/reyk-cli"; \
 	cd $(specific_libraries_test); \
 	uvx "$$CLI_PATH" sync
 
@@ -26,7 +26,7 @@ test-library-memray: install install-test-libs
 	uv run pytest -v tests/ --memray
 
 test-cli: install install-test-libs
-	uv run coverage run $(COVERAGE_FLAGS) -m pytest -v pyisolate-cli/tests/
+	uv run coverage run $(COVERAGE_FLAGS) -m pytest -v reyk-cli/tests/
 
 # The --append flag is needed to combine the coverage data from both test-library and test-cli
 test: install install-test-libs

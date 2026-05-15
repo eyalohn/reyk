@@ -355,7 +355,7 @@ wheels = [
 ]
 
 [[package]]
-name = "pyisolate-test-specific-libraries"
+name = "reyk-test-specific-libraries"
 version = "0.0.0"
 source = { virtual = "." }
 

@@ -1,18 +1,18 @@
 ---
 title: Configuration
-description: Configure how PyIsolate vendors and isolates dependencies.
+description: Configure how Reyk vendors and isolates dependencies.
 icon: FileSliders
 ---
 
-PyIsolate has two configuration surfaces: `pyproject.toml` that controls how the CLI vendors dependencies,
+Reyk has two configuration surfaces: `pyproject.toml` that controls how the CLI vendors dependencies,
 and parameters on the `isolate_package()` function that control how isolation is applied at runtime.
 
 ## `pyproject.toml` configuration
 
-Add a `[tool.pyisolate]` section to your `pyproject.toml`:
+Add a `[tool.reyk]` section to your `pyproject.toml`:
 
 ```toml
-[tool.pyisolate]
+[tool.reyk]
 libraries-path = "libs"
 vendor-groups = ["vendor-libs"]
 ```
@@ -37,7 +37,7 @@ def isolate_package(
 
 ### Parameters
 
-- **`package_path`** (`Path | None`, default: `None`): The path to the package to isolate. When `None`, PyIsolate automatically detects the directory of the file that called isolate_package(). In almost all cases you can omit this parameter.
+- **`package_path`** (`Path | None`, default: `None`): The path to the package to isolate. When `None`, Reyk automatically detects the directory of the file that called isolate_package(). In almost all cases you can omit this parameter.
 - **`vendorized_libs_dir_name`** (string, default: `"libs"`): The name of the subdirectory inside your package where vendored libraries are stored. This must match the `libraries-path` value in `pyproject.toml`.
 
 ## Examples
@@ -45,7 +45,7 @@ def isolate_package(
 Calling with all defaults - the common case:
 
 ```py
-from pyisolate.isolator import isolate_package
+from reyk.isolator import isolate_package
 
 isolate_package()
 ```
@@ -53,13 +53,13 @@ isolate_package()
 Calling with a custom libs directory name:
 
 ```py
-from pyisolate.isolator import isolate_package
+from reyk.isolator import isolate_package
 
 isolate_package(vendorized_libs_dir_name="vendor")
 ```
 
 ```toml
-[tool.pyisolate]
+[tool.reyk]
 libraries-path = "vendor"
 ```
 

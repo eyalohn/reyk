@@ -1,10 +1,9 @@
+import itertools
 from collections.abc import Sequence
 from pathlib import Path
-import itertools
 
 import typer
-from pyisolate_cli.command_executor import run_command_exit_on_fail
-
+from reyk_cli.command_executor import run_command_exit_on_fail
 
 LOCK_FILE_NAME = "vendor.lock"
 
