@@ -1,9 +1,12 @@
 # pyright: reportMissingImports=false
+from importlib.metadata import Distribution
 from pathlib import Path
 import shutil
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from types import ModuleType
 import pytest
+from pyisolate.vendor_importer import get_installed_vendor_importer
+from tests.blackbox.distributions_finder import assert_distribution_names
 from tests.blackbox.project_paths import EXAMPLE_PROJECT_LIBRARIES_PATH, LOCKED_FILES_PENDING_DELETION_PATH
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 
@@ -51,6 +54,48 @@ def test_import_pymongo(files_manager: ExampleProjectFileManager) -> None:
 def test_import_protobuf(files_manager: ExampleProjectFileManager) -> None:
     google = _import_module_in_project(files_manager, "google.protobuf.internal.api_implementation")
     assert google.protobuf.internal.api_implementation.Type() != "python"
+
+
+def test_find_distributions_with_specific_libraries(
+    distributions_finder: Callable[[], list[Distribution]],
+) -> None:
+    distributions = distributions_finder()
+    assert_distribution_names(
+        distributions,
+        {
+            "aiormq",
+            "annotated-types",
+            "dnspython",
+            "idna",
+            "importlib_metadata",
+            "multidict",
+            "opentelemetry-api",
+            "opentelemetry-sdk",
+            "opentelemetry-semantic-conventions",
+            "pamqp",
+            "pika",
+            "propcache",
+            "protobuf",
+            "pydantic",
+            "pydantic_core",
+            "pymongo",
+            "typing-inspection",
+            "typing_extensions",
+            "yarl",
+            "zipp",
+        },
+    )
+
+    opentelemetry_sdk_distribution = next(d for d in distributions if "opentelemetry-sdk" in d.name)
+    console_entry_points = list(
+        opentelemetry_sdk_distribution.entry_points.select(
+            value="opentelemetry.sdk._logs.export:ConsoleLogRecordExporter"  # Arbitrary entrypoint
+        )
+    )
+    assert len(console_entry_points) == 1
+    console_entry_point = console_entry_points[0].load()
+    # Ensure it successfully loads (imports module)
+    assert console_entry_point is not None
 
 
 def _import_module_in_project(files_manager: ExampleProjectFileManager, library_name: str) -> ModuleType:

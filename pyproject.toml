@@ -66,6 +66,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**/test_*.py" = ["SLF001", "PLC0415", "F401"]
 "tests/**/conftest.py" = ["SLF001", "PLC0415", "F401"]
+"tests/blackbox/distributions_finder.py" = ["SLF001", "PLC0415", "F401"]
 "pyisolate/vendor_importer.py" = ["A002"]
 
 [tool.pyright]

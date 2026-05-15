@@ -32,6 +32,15 @@ class ExampleProjectFileManager:
             content=content,
         )
 
+    def create_fake_dist_info(
+        self,
+        library_name: str,
+    ) -> Path:
+        return self.create_project_file(
+            file_name=str(self._libraries_dir_relative_path / f"{library_name}.dist-info" / "METADATA"),
+            content=f"Metadata-Version: 2.4\nName: {library_name}",
+        )
+
     def create_project_module(self, module_name: str, content: str) -> Path:
         return self.create_project_file(
             file_name=self._convert_module_name_to_file_name(module_name),
