@@ -105,7 +105,7 @@ def test_import_project_package_from_project(
     "variable_access_statement",
     generate_variable_access_statement_params(
         ALL_IMPORT_TECHNIQUES_BUT_RELATIVE,
-        "example_library",
+        "example_library.example_package",
         MY_STRING_NAME,
     ),
 )
@@ -115,7 +115,7 @@ def test_import_library_package_from_project(
 ) -> None:
     files_manager.create_library_module(
         library_name="example_library",
-        module_name="__init__",
+        module_name="example_package.__init__",
         content=MY_STRING_DECLARATION_MODULE,
     )
     files_manager.create_project_module(
@@ -228,6 +228,94 @@ import example_library.second_module
         library_name="example_library",
         module_name="second_module",
         content=MY_STRING_DECLARATION_MODULE,
+    )
+    files_manager.create_project_module(
+        module_name="module",
+        content=variable_access_statement,
+    )
+    _assert_my_string_in_module()
+
+
+@pytest.mark.parametrize(
+    "variable_access_statement",
+    generate_variable_access_statement_params(
+        ALL_IMPORT_TECHNIQUES_BUT_RELATIVE,
+        "example_library.example_package",
+        MY_STRING_NAME,
+    ),
+)
+def test_import_recursive_library_package_in_init_fails(
+    variable_access_statement: str,
+    files_manager: ExampleProjectFileManager,
+) -> None:
+    files_manager.create_library_module(
+        library_name="example_library",
+        module_name="example_package.__init__",
+        content=f"from example_library.example_package.first_module import {MY_STRING_NAME}",
+    )
+    files_manager.create_library_module(
+        library_name="example_library",
+        module_name="example_package.first_module",
+        content=f"""
+import example_library.example_package.second_module
+{MY_STRING_NAME} = example_library.example_package.second_module.{MY_STRING_NAME}
+""",
+    )
+    files_manager.create_library_module(
+        library_name="example_library",
+        module_name="example_package.second_module",
+        content=MY_STRING_DECLARATION_MODULE,
+    )
+    files_manager.create_project_module(
+        module_name="module",
+        content=variable_access_statement,
+    )
+    # Normal python behavior to raise an error when trying to access the value from an absolute import that
+    # includes a package which is partially initialized
+    with pytest.raises(AttributeError, match="circular import"):
+        _assert_my_string_in_module()
+
+
+@pytest.mark.parametrize(
+    "variable_access_statement",
+    generate_variable_access_statement_params(
+        ALL_IMPORT_TECHNIQUES_BUT_RELATIVE,
+        "example_library",
+        MY_STRING_NAME,
+    ),
+)
+def test_import_recursive_library_package_in_init_use_after_load(
+    variable_access_statement: str,
+    files_manager: ExampleProjectFileManager,
+) -> None:
+    files_manager.create_library_module(
+        library_name="example_library",
+        module_name="example_package.__init__",
+        content="from example_library.example_package.first_module import load_my_string",
+    )
+    files_manager.create_library_module(
+        library_name="example_library",
+        module_name="example_package.first_module",
+        content=f"""
+import example_library.example_package.second_module
+# Accessing example_package while its partially initialized causes a circular import error but if it isn't
+# accessed immediately and only later this should work
+def load_my_string() -> str:
+    return example_library.example_package.second_module.{MY_STRING_NAME}
+""",
+    )
+    files_manager.create_library_module(
+        library_name="example_library",
+        module_name="example_package.second_module",
+        content=MY_STRING_DECLARATION_MODULE,
+    )
+    files_manager.create_library_module(
+        library_name="example_library",
+        module_name="__init__",
+        content=f"""
+import example_library.example_package
+{MY_STRING_NAME} = example_library.example_package.load_my_string()
+""",
     )
     files_manager.create_project_module(
         module_name="module",

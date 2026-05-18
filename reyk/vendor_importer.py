@@ -68,7 +68,7 @@ class VendorImporter(DistributionFinder):
             self._sys_modules_state_handler.remove_vendorized_sys_modules()
             return self._original_builtins_import_method(name, globals, locals, fromlist, level)
 
-        vendorized_import_path = f"{self.vendor_prefix}.{name}"
+        vendorized_import_path = self._vendor_import(name)
         self._sys_modules_state_handler.install_vendorized_sys_modules()
         imported_vendorized: bool
         try:
@@ -108,7 +108,7 @@ class VendorImporter(DistributionFinder):
             self._sys_modules_state_handler.remove_vendorized_sys_modules()
             return self._original_importlib_import_method(name, package)
 
-        vendorized_import_path = f"{self.vendor_prefix}.{name}"
+        vendorized_import_path = self._vendor_import(name)
         try:
             self._sys_modules_state_handler.install_vendorized_sys_modules()
             return self._original_importlib_import_method(vendorized_import_path, None)
@@ -128,10 +128,9 @@ class VendorImporter(DistributionFinder):
         )
         if module_without_vendor_prefix is None:
             self._sys_modules_state_handler.install_vendorized_sys_modules()
-            returned_module_name_with_prefix = f"{self.vendor_prefix}.{self._extract_returned_module_name(module_name)}"
-            module_without_vendor_prefix = sys.modules.get(returned_module_name_with_prefix)
-            if module_without_vendor_prefix is None:
-                raise ModuleNotFoundError(f"No module named: '{returned_module_name_with_prefix}'")
+            module_without_vendor_prefix = self._retrieve_imported_module_from_sys_modules(
+                self._vendor_import(self._extract_returned_module_name(module_name))
+            )
 
         return module_without_vendor_prefix
 
@@ -154,9 +153,27 @@ class VendorImporter(DistributionFinder):
         current_module = returned_module
         for index, path_component in enumerate(packages):
             if index > 0:
-                current_module = getattr(current_module, path_component)
+                try:
+                    current_module = getattr(current_module, path_component)
+                except AttributeError:
+                    current_module = self._retrieve_imported_module_from_sys_modules(
+                        self._vendor_import(".".join(packages[: index + 1]))
+                    )
             current_module_name = ".".join(packages[: index + 1])
             self._sys_modules_state_handler.add_only_vendorized_module(current_module_name, current_module)
+
+    def _retrieve_imported_module_from_sys_modules(
+        self,
+        module_name: str,
+    ) -> ModuleType:
+        module = sys.modules.get(
+            module_name,
+            self._sys_modules_state_handler.get_vendorized_module_by_name(module_name),
+        )
+        if module is None:
+            raise ModuleNotFoundError(f"No module named: '{module_name}'")
+
+        return module
 
     def _try_retrieving_imported_module_by_getattr(
         self,
@@ -185,6 +202,9 @@ class VendorImporter(DistributionFinder):
             packages,
             returned_module,
         )
+
+    def _vendor_import(self, import_path: str) -> str:
+        return f"{self.vendor_prefix}.{import_path}"
 
     def _extract_returned_module_name(self, module_name: str) -> str:
         returned_module_attribute, _, _ = module_name.partition(".")
