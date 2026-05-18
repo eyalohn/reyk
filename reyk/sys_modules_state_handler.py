@@ -1,4 +1,5 @@
 import sys
+from typing import Optional
 from types import ModuleType
 
 
@@ -36,7 +37,7 @@ class SysModulesStateHandler:
         if self._are_vendorized_modules_installed:
             sys.modules[name] = module
 
-    def get_vendorized_module_by_name(self, name: str) -> ModuleType | None:
+    def get_vendorized_module_by_name(self, name: str) -> Optional[ModuleType]:
         return self._vendorized_sys_modules.get(name)
 
     def clear_state(self) -> None:

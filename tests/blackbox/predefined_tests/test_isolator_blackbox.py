@@ -274,8 +274,8 @@ import example_library.example_package.second_module
     # includes a package which is partially initialized
     with pytest.raises(
         AttributeError,
-        # Import error message was improved in Python 3.10
-        match=("circular import" if sys.version_info >= (3, 10) else "has no attribute"),
+        # Import error message was improved in Python 3.11
+        match=("circular import" if sys.version_info >= (3, 11) else "has no attribute"),
     ):
         _assert_my_string_in_module()
 
