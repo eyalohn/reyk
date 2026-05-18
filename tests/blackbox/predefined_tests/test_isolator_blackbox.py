@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.blackbox.distributions_finder import assert_distribution_names
+from tests.blackbox.test_distributions_finder import assert_distribution_names
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 from tests.blackbox.libraries_manager import LibrariesManager
 from tests.blackbox.predefined_tests.variable_access_statement_generator import (
