@@ -272,7 +272,11 @@ import example_library.example_package.second_module
     )
     # Normal python behavior to raise an error when trying to access the value from an absolute import that
     # includes a package which is partially initialized
-    with pytest.raises(AttributeError, match="circular import"):
+    with pytest.raises(
+        AttributeError,
+        # Import error message was improved in Python 3.10
+        match=("circular import" if sys.version_info >= (3, 10) else "has no attribute"),
+    ):
         _assert_my_string_in_module()
 
 
