@@ -10,6 +10,7 @@ from types import ModuleType
 from typing import Optional, Protocol
 
 from reyk.caller_finder import is_caller_part_of_library
+from reyk.stdlib_finder import is_part_of_stdlib
 from reyk.sys_modules_state_handler import SysModulesStateHandler
 
 LOGGER = logging.getLogger(__name__)
@@ -231,6 +232,10 @@ class VendorImporter(DistributionFinder):
 
         if not is_caller_part_of_library(self.package_name):
             LOGGER.debug("Cannot import because it's not part of library")
+            return False
+
+        if is_part_of_stdlib(name):
+            LOGGER.debug(f"Skipping vendor import attempt for {name} because the same name exists in stdlib")
             return False
 
         return True

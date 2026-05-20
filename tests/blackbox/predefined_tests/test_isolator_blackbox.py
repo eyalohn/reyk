@@ -421,6 +421,25 @@ def test_import_real_library_with_same_name(files_manager: ExampleProjectFileMan
     assert not hasattr(pytest, MY_STRING_NAME)
 
 
+def test_import_prefers_standard_library_over_vendored(files_manager: ExampleProjectFileManager) -> None:
+    files_manager.create_library_module(
+        library_name="pathlib",
+        module_name="__init__",
+        content=MY_STRING_DECLARATION_MODULE,
+    )
+    files_manager.create_project_module(
+        module_name="module",
+        content="import pathlib",
+    )
+
+    import pathlib
+
+    assert pathlib.Path is not None
+    import example_project.module
+
+    assert example_project.module.pathlib is pathlib
+
+
 def test_file_attribute_correct(files_manager: ExampleProjectFileManager) -> None:
     library_name = "example_library"
     library_module_name = "library_module"

@@ -22,7 +22,7 @@ from tests.blackbox.project_paths import (
 def install_project_in_path() -> Iterable[None]:
     # Tests will be able to import as if in the example project
     project_path_parent = str(EXAMPLE_PROJECT_PATH.parent)
-    sys.path.insert(0, project_path_parent)
+    sys.path.append(project_path_parent)
     yield
     sys.path.remove(project_path_parent)
 
