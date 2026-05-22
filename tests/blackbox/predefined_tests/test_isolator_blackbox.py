@@ -440,6 +440,25 @@ def test_import_prefers_standard_library_over_vendored(files_manager: ExamplePro
     assert example_project.module.pathlib is pathlib
 
 
+def test_use_module_during_initialization(files_manager: ExampleProjectFileManager) -> None:
+    files_manager.create_library_module(
+        library_name="example_library",
+        module_name="__init__",
+        content="""
+import sys
+partial_module = sys.modules["example_library"]
+MY_MODULE_NAME = partial_module.__name__
+""",
+    )
+    files_manager.create_project_module(
+        module_name="module",
+        content="from example_library import MY_MODULE_NAME",
+    )
+    import example_project.module
+
+    assert example_project.module.MY_MODULE_NAME == "example_project.libs.example_library"
+
+
 def test_file_attribute_correct(files_manager: ExampleProjectFileManager) -> None:
     library_name = "example_library"
     library_module_name = "library_module"
