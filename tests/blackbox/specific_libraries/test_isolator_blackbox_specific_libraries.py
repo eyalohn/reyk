@@ -1,12 +1,12 @@
 # pyright: reportMissingImports=false
 import shutil
+import sys
 from collections.abc import Callable, Iterable
 from importlib.metadata import Distribution
 from pathlib import Path
 from types import ModuleType
 
 import pytest
-from reyk.vendor_importer import get_installed_vendor_importer
 
 from tests.blackbox.test_distributions_finder import assert_distribution_names
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
@@ -95,12 +95,22 @@ def test_find_distributions_with_specific_libraries(
         },
     )
 
-    opentelemetry_sdk_distribution = next(d for d in distributions if "opentelemetry-sdk" in d.name)
-    console_entry_points = list(
-        opentelemetry_sdk_distribution.entry_points.select(
-            value="opentelemetry.sdk._logs.export:ConsoleLogRecordExporter"  # Arbitrary entrypoint
-        )
+
+def test_select_opentelemetry_entry_points(
+    distributions_finder: Callable[[], list[Distribution]],
+) -> None:
+    distributions = distributions_finder()
+
+    # We use distributions old api to still support Python 3.9
+    opentelemetry_sdk_distribution = next(
+        dist for dist in distributions if dist.metadata["Name"] == "opentelemetry-sdk"
     )
+    console_entry_points = [
+        entry_point
+        for entry_point in opentelemetry_sdk_distribution.entry_points
+        if entry_point.value == "opentelemetry.sdk._logs.export:ConsoleLogRecordExporter"
+    ]
+
     assert len(console_entry_points) == 1
     console_entry_point = console_entry_points[0].load()
     # Ensure it successfully loads (imports module)
