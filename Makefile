@@ -20,13 +20,13 @@ $(specific_libraries_test_libs):
 	uvx "$$CLI_PATH" sync
 
 test-library: install install-test-libs
-	uv run coverage run $(COVERAGE_FLAGS) -m pytest -v tests/
+	uv run coverage run $(COVERAGE_FLAGS) -m pytest -vv tests/
 
 test-library-memray: install install-test-libs
 	uv run pytest -v tests/ --memray
 
 test-cli: install install-test-libs
-	uv run coverage run $(COVERAGE_FLAGS) -m pytest -v reyk-cli/tests/
+	uv run coverage run $(COVERAGE_FLAGS) -m pytest -vv reyk-cli/tests/
 
 # The --append flag is needed to combine the coverage data from both test-library and test-cli
 test: install install-test-libs

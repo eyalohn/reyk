@@ -8,7 +8,7 @@ from types import ModuleType
 
 import pytest
 
-from tests.blackbox.distributions_finder import assert_distribution_names
+from tests.blackbox.test_distributions_finder import assert_distribution_names
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 from tests.blackbox.project_paths import EXAMPLE_PROJECT_LIBRARIES_PATH, LOCKED_FILES_PENDING_DELETION_PATH
 
@@ -36,6 +36,7 @@ def install_test_libs() -> Iterable[None]:
         "pydantic",  # Rust pyd
         "aiormq",  # Lots of relative imports
         "pika",  # Large library with lots of builtins usage
+        "boto3",  # Lots of absolute imports
     ],
 )
 def test_import_library(files_manager: ExampleProjectFileManager, library_name: str) -> None:
@@ -66,9 +67,12 @@ def test_find_distributions_with_specific_libraries(
         {
             "aiormq",
             "annotated-types",
+            "boto3",
+            "botocore",
             "dnspython",
             "idna",
             "importlib_metadata",
+            "jmespath",
             "multidict",
             "opentelemetry-api",
             "opentelemetry-sdk",
@@ -80,8 +84,12 @@ def test_find_distributions_with_specific_libraries(
             "pydantic",
             "pydantic_core",
             "pymongo",
+            "python-dateutil",
+            "s3transfer",
+            "six",
             "typing-inspection",
             "typing_extensions",
+            "urllib3",
             "yarl",
             "zipp",
         },

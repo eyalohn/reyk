@@ -8,7 +8,7 @@ import pytest
 from reyk.isolator import isolate_package
 from reyk.vendor_importer import get_installed_vendor_importer
 
-from tests.blackbox.distributions_finder import find_distributions_from_library, find_distributions_from_project
+from tests.blackbox.test_distributions_finder import find_distributions_from_library, find_distributions_from_project
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 from tests.blackbox.libraries_manager import LibrariesManager
 from tests.blackbox.project_paths import (
@@ -22,7 +22,7 @@ from tests.blackbox.project_paths import (
 def install_project_in_path() -> Iterable[None]:
     # Tests will be able to import as if in the example project
     project_path_parent = str(EXAMPLE_PROJECT_PATH.parent)
-    sys.path.insert(0, project_path_parent)
+    sys.path.append(project_path_parent)
     yield
     sys.path.remove(project_path_parent)
 
