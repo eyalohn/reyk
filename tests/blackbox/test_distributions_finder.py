@@ -37,8 +37,6 @@ def find_distributions_from_library(files_manager: ExampleProjectFileManager) ->
 
 
 def assert_distribution_names(distributions: list[Distribution], expected_distributions: set[str]) -> None:
-    if sys.version_info >= (3, 10):
-        distribution_names = {distribution.name for distribution in distributions}
-    else:
-        distribution_names = {distribution.metadata["Name"] for distribution in distributions}
+    # We use distributions old api to still support Python 3.9
+    distribution_names = {distribution.metadata["Name"] for distribution in distributions}
     assert distribution_names == expected_distributions

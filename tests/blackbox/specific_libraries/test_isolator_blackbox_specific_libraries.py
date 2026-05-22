@@ -101,21 +101,15 @@ def test_select_opentelemetry_entry_points(
 ) -> None:
     distributions = distributions_finder()
 
-    if sys.version_info >= (3, 10):
-        opentelemetry_sdk_distribution = next(d for d in distributions if "opentelemetry-sdk" in d.name)
-        console_entry_points = list(
-            opentelemetry_sdk_distribution.entry_points.select(
-                value="opentelemetry.sdk._logs.export:ConsoleLogRecordExporter"  # Arbitrary entrypoint
-            )
-        )
-    else:
-        opentelemetry_sdk_distribution = next(d for d in distributions if "opentelemetry-sdk" in d.metadata["Name"])
-        # Entry points API has changed in Python 3.10
-        console_entry_points = [
-            entry_point
-            for entry_point in opentelemetry_sdk_distribution.entry_points
-            if entry_point.value == "opentelemetry.sdk._logs.export:ConsoleLogRecordExporter"
-        ]
+    # We use distributions old api to still support Python 3.9
+    opentelemetry_sdk_distribution = next(
+        dist for dist in distributions if dist.metadata["Name"] == "opentelemetry-sdk"
+    )
+    console_entry_points = [
+        entry_point
+        for entry_point in opentelemetry_sdk_distribution.entry_points
+        if entry_point.value == "opentelemetry.sdk._logs.export:ConsoleLogRecordExporter"
+    ]
 
     assert len(console_entry_points) == 1
     console_entry_point = console_entry_points[0].load()
