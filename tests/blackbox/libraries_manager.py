@@ -12,7 +12,7 @@ class LibrariesManager:
         self._created_libraries: set[Path] = set()
 
     def install_libraries_in_path(self) -> None:
-        sys.path.insert(0, str(self._libraries_path))
+        sys.path.append(str(self._libraries_path))
 
     def remove_libraries_from_path(self) -> None:
         sys.path.remove(str(self._libraries_path))

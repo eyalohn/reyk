@@ -3,9 +3,11 @@ import sys
 from collections.abc import Callable, Iterable
 from importlib.metadata import Distribution
 from pathlib import Path
+from typing import cast
 
 import pytest
 from reyk.isolator import isolate_package
+from reyk.vendored_sys_modules import VendoredSysModules
 from reyk.vendor_importer import get_installed_vendor_importer
 
 from tests.blackbox.test_distributions_finder import find_distributions_from_library, find_distributions_from_project
@@ -29,7 +31,7 @@ def install_project_in_path() -> Iterable[None]:
 
 @pytest.fixture(scope="package", autouse=True)
 def setup_vendor_importer() -> Iterable[None]:
-    isolate_package(Path(__file__).parent / "example_project")
+    isolate_package(EXAMPLE_PROJECT_PATH)
     yield
     vendor_importer = get_installed_vendor_importer()
     assert vendor_importer is not None
@@ -70,26 +72,10 @@ def distributions_finder(
     return functools.partial(request.param, files_manager)
 
 
-@pytest.fixture(scope="package", autouse=True)
-def import_example_project(install_project_in_path: None) -> None:  # noqa: ARG001
-    # This is crucial to happen before `clear_imported_modules_cache` as it will isolate
-    # the project every test as the `__init__` will be reloaded (because its removed from sys modules)
-
-    import example_project
-
-
-@pytest.fixture(autouse=True)
-def clear_vendorized_modules_cache() -> None:
-    # Must be before `clear_sys_imported_modules_cache` because by clearing the cache
-    # it also returns the removed `sys.modules` back (returns to an non-vendorized state)
-    vendor_importer = get_installed_vendor_importer()
-    if vendor_importer is not None:
-        vendor_importer.clear_vendorized_cache()
-
-
 @pytest.fixture(autouse=True)
 def clear_sys_imported_modules_cache() -> Iterable[None]:
-    imported_modules_before_test = sys.modules.copy()
+    vendor_sys_modules = sys.modules
+    assert isinstance(vendor_sys_modules, VendoredSysModules)
+    snapshot = vendor_sys_modules.take_snapshot()
     yield
-    sys.modules.clear()
-    sys.modules.update(imported_modules_before_test)
+    vendor_sys_modules.restore_snapshot(snapshot)

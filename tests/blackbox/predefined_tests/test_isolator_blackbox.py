@@ -51,6 +51,8 @@ def test_import_project_module_from_project(
         module_name="module",
         content=variable_access_statement,
     )
+    import example_project.module
+
     _assert_my_string_in_module()
 
 
