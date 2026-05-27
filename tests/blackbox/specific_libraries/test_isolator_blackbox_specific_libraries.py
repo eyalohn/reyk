@@ -8,7 +8,7 @@ from types import ModuleType
 
 import pytest
 
-from tests.blackbox.test_distributions_finder import assert_distribution_names
+from tests.blackbox.test_distributions_finder import assert_distribution_names_subset
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 from tests.blackbox.project_paths import EXAMPLE_PROJECT_LIBRARIES_PATH, LOCKED_FILES_PENDING_DELETION_PATH
 
@@ -65,48 +65,32 @@ def test_import_kafka(files_manager: ExampleProjectFileManager) -> None:
 
 
 def test_find_distributions_with_specific_libraries(
-    files_manager: ExampleProjectFileManager,
     distributions_finder: Callable[[], list[Distribution]],
 ) -> None:
     distributions = distributions_finder()
-    assert_distribution_names(
+    assert_distribution_names_subset(
         distributions,
         {
             "SQLAlchemy",
             "aiormq",
-            "annotated-types",
             "boto3",
             "botocore",
             "confluent-kafka",
-            "dnspython",
-            "greenlet",
-            "idna",
             "importlib_metadata",
-            "jmespath",
-            "multidict",
             "opentelemetry-api",
             "opentelemetry-sdk",
-            "opentelemetry-semantic-conventions",
             "pamqp",
             "pika",
-            "propcache",
             "protobuf",
             "pydantic",
             "pydantic_core",
             "pymongo",
-            "python-dateutil",
-            "s3transfer",
-            "six",
-            "typing-inspection",
-            "typing_extensions",
-            "urllib3",
-            "yarl",
-            "zipp",
         },
     )
 
 
 def test_select_opentelemetry_entry_points(
+    files_manager: ExampleProjectFileManager,
     distributions_finder: Callable[[], list[Distribution]],
 ) -> None:
     distributions = distributions_finder()

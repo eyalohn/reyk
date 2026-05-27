@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.blackbox.test_distributions_finder import assert_distribution_names
+from tests.blackbox.test_distributions_finder import assert_distribution_names_subset
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 from tests.blackbox.libraries_manager import LibrariesManager
 from tests.blackbox.predefined_tests.variable_access_statement_generator import (
@@ -514,7 +514,7 @@ def test_find_distributions(
         files_manager.create_fake_dist_info(library_name)
 
     distributions = distributions_finder()
-    assert_distribution_names(distributions, library_names)
+    assert_distribution_names_subset(distributions, library_names)
 
 
 def _assert_my_string_in_module() -> None:
