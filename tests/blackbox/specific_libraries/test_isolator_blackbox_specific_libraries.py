@@ -37,6 +37,7 @@ def install_test_libs() -> Iterable[None]:
         "aiormq",  # Lots of relative imports
         "pika",  # Large library with lots of builtins usage
         "boto3",  # Lots of absolute imports
+        "sqlalchemy",  # Accesses sys modules from inside partially-initialized module
     ],
 )
 def test_import_library(files_manager: ExampleProjectFileManager, library_name: str) -> None:
@@ -58,18 +59,27 @@ def test_import_protobuf(files_manager: ExampleProjectFileManager) -> None:
     assert google.protobuf.internal.api_implementation.Type() != "python"
 
 
+def test_import_kafka(files_manager: ExampleProjectFileManager) -> None:
+    confluent_kafka = _import_module_in_project(files_manager, "confluent_kafka.cimpl")
+    assert confluent_kafka.cimpl.version() == "2.14.0"
+
+
 def test_find_distributions_with_specific_libraries(
+    files_manager: ExampleProjectFileManager,
     distributions_finder: Callable[[], list[Distribution]],
 ) -> None:
     distributions = distributions_finder()
     assert_distribution_names(
         distributions,
         {
+            "SQLAlchemy",
             "aiormq",
             "annotated-types",
             "boto3",
             "botocore",
+            "confluent-kafka",
             "dnspython",
+            "greenlet",
             "idna",
             "importlib_metadata",
             "jmespath",
@@ -102,7 +112,17 @@ def test_find_distributions_with_specific_libraries(
         )
     )
     assert len(console_entry_points) == 1
-    console_entry_point = console_entry_points[0].load()
+    files_manager.create_project_module(
+        module_name="loader_module",
+        content="""
+def load_entry_point(entry_point):
+    return entry_point.load()
+""",
+    )
+    import example_project.loader_module
+
+    # Must be loaded in vendored context
+    console_entry_point = example_project.loader_module.load_entry_point(console_entry_points[0])
     # Ensure it successfully loads (imports module)
     assert console_entry_point is not None
 

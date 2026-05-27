@@ -1,6 +1,7 @@
 import builtins
 import functools
 import importlib
+import importlib.metadata
 import logging
 import sys
 from collections.abc import Iterable, Mapping, Sequence
@@ -262,6 +263,10 @@ class VendorImporter(DistributionFinder):
     def install(self) -> None:
         builtins.__import__ = self.builtins_import_override
         importlib.import_module = self.importlib_import_override
+        # Distribution entrypoint loading uses the import_module in `importlib.metadata`
+        # and therefore needs to be overridden as well
+        importlib.metadata.import_module = self.importlib_import_override  # pyright: ignore[reportAttributeAccessIssue]
+
         if self not in sys.meta_path:
             # For distribution finder
             sys.meta_path.append(self)
@@ -271,6 +276,8 @@ class VendorImporter(DistributionFinder):
     def uninstall(self) -> None:
         builtins.__import__ = self._original_builtins_import_method
         importlib.import_module = self._original_importlib_import_method
+        importlib.metadata.import_module = self._original_importlib_import_method  # pyright: ignore[reportAttributeAccessIssue]
+
         if self in sys.meta_path:
             sys.meta_path.remove(self)
 
