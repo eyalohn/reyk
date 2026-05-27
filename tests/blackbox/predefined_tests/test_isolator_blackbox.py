@@ -423,23 +423,37 @@ def test_import_real_library_with_same_name(files_manager: ExampleProjectFileMan
     assert not hasattr(pytest, MY_STRING_NAME)
 
 
-def test_import_prefers_standard_library_over_vendored(files_manager: ExampleProjectFileManager) -> None:
+@pytest.mark.parametrize(
+    ("python_module_name", "attribute_name_in_module"),
+    [
+        ("uuid", "uuid4"),  # in stdlib
+        ("time", "sleep"),  # in builtins
+    ],
+)
+def test_import_prefers_standard_library_over_vendored(
+    files_manager: ExampleProjectFileManager,
+    python_module_name: str,
+    attribute_name_in_module: str,
+) -> None:
+    # Ensure its not in sys modules to not effect the test
+    sys.modules.pop(python_module_name, None)
+
     files_manager.create_library_module(
-        library_name="pathlib",
+        library_name=python_module_name,
         module_name="__init__",
         content=MY_STRING_DECLARATION_MODULE,
     )
     files_manager.create_project_module(
         module_name="module",
-        content="import pathlib",
+        content=f"import {python_module_name} as imported_module",
     )
 
-    import pathlib
+    actual_module = __import__(python_module_name)
 
-    assert pathlib.Path is not None
+    assert hasattr(actual_module, attribute_name_in_module)
     import example_project.module
 
-    assert example_project.module.pathlib is pathlib
+    assert example_project.module.imported_module is actual_module
 
 
 def test_use_module_during_initialization(files_manager: ExampleProjectFileManager) -> None:

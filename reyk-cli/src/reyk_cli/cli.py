@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Annotated, cast
 
 import typer
+
 from reyk_cli.configuration_reader import DEFAULT_VENDOR_GROUP, read_reyk_configuration
 from reyk_cli.uv_vendorizer import UVBasedVendorizer
 
@@ -74,5 +75,5 @@ def remove(
     vendorizer.sync_from_group_to_target_path()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     app()
