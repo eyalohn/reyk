@@ -6,7 +6,7 @@ from reyk.caller_finder import is_caller_part_of_library
 from reyk.stdlib_finder import is_part_of_stdlib
 
 
-@dataclass(kw_only=True)
+@dataclass
 class SysModulesSnapshot:
     original_sys_modules: dict[str, ModuleType]
     user_modules: dict[str, ModuleType]
