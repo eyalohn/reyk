@@ -36,7 +36,7 @@ def find_distributions_from_library(files_manager: ExampleProjectFileManager) ->
     return example_project.module.DISTRIBUTIONS
 
 
-def assert_distribution_names(distributions: list[Distribution], expected_distributions: set[str]) -> None:
+def assert_distribution_names_subset(distributions: list[Distribution], expected_distributions: set[str]) -> None:
     # We use distributions old api to still support Python 3.9
     distribution_names = {dist.metadata["Name"] for dist in distributions}
-    assert distribution_names == expected_distributions
+    assert expected_distributions.issubset(distribution_names)

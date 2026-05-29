@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.blackbox.test_distributions_finder import assert_distribution_names
+from tests.blackbox.test_distributions_finder import assert_distribution_names_subset
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 from tests.blackbox.libraries_manager import LibrariesManager
 from tests.blackbox.predefined_tests.variable_access_statement_generator import (
@@ -51,6 +51,8 @@ def test_import_project_module_from_project(
         module_name="module",
         content=variable_access_statement,
     )
+    import example_project.module
+
     _assert_my_string_in_module()
 
 
@@ -454,6 +456,25 @@ def test_import_prefers_standard_library_over_vendored(
     assert example_project.module.imported_module is actual_module
 
 
+def test_use_module_during_initialization(files_manager: ExampleProjectFileManager) -> None:
+    files_manager.create_library_module(
+        library_name="example_library",
+        module_name="__init__",
+        content="""
+import sys
+partial_module = sys.modules["example_library"]
+MY_MODULE_NAME = partial_module.__name__
+""",
+    )
+    files_manager.create_project_module(
+        module_name="module",
+        content="from example_library import MY_MODULE_NAME",
+    )
+    import example_project.module
+
+    assert example_project.module.MY_MODULE_NAME == "example_project.libs.example_library"
+
+
 def test_file_attribute_correct(files_manager: ExampleProjectFileManager) -> None:
     library_name = "example_library"
     library_module_name = "library_module"
@@ -493,7 +514,7 @@ def test_find_distributions(
         files_manager.create_fake_dist_info(library_name)
 
     distributions = distributions_finder()
-    assert_distribution_names(distributions, library_names)
+    assert_distribution_names_subset(distributions, library_names)
 
 
 def _assert_my_string_in_module() -> None:

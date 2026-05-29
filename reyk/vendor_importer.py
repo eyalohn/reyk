@@ -1,6 +1,7 @@
 import builtins
 import functools
 import importlib
+import importlib.metadata
 import logging
 import sys
 from collections.abc import Iterable, Mapping, Sequence
@@ -11,7 +12,7 @@ from typing import Optional, Protocol
 
 from reyk.caller_finder import is_caller_part_of_library
 from reyk.stdlib_finder import is_part_of_stdlib
-from reyk.sys_modules_state_handler import SysModulesStateHandler
+from reyk.vendored_sys_modules import VendoredSysModules
 
 LOGGER = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ class VendorImporter(DistributionFinder):
         self.vendorized_libs_path = vendorized_libs_path
         self._original_builtins_import_method = original_builtins_import_method
         self._original_importlib_import_method = original_importlib_import_method
-        self._sys_modules_state_handler = SysModulesStateHandler()
+        self._sys_modules_wrapper = VendoredSysModules(sys.modules, self.package_name, self.vendor_prefix)
 
     def builtins_import_override(
         self,
@@ -66,11 +67,11 @@ class VendorImporter(DistributionFinder):
             # If importing a module which shouldn't be vendorized
             # we need to exit the context to ensure we don't retrieve
             # a vendorized module
-            self._sys_modules_state_handler.remove_vendorized_sys_modules()
+            self._sys_modules_wrapper.remove_vendored_sys_modules()
             return self._original_builtins_import_method(name, globals, locals, fromlist, level)
 
         vendorized_import_path = self._vendor_import(name)
-        self._sys_modules_state_handler.install_vendorized_sys_modules()
+        self._sys_modules_wrapper.install_vendored_sys_modules()
         imported_vendorized: bool
         try:
             LOGGER.debug(f"Importing: {vendorized_import_path}")
@@ -80,7 +81,7 @@ class VendorImporter(DistributionFinder):
             imported_vendorized = True
         except ModuleNotFoundError as exc:
             LOGGER.debug(f"Failed to import vendorized: {name}: {exc!s}")
-            self._sys_modules_state_handler.remove_vendorized_sys_modules()
+            self._sys_modules_wrapper.remove_vendored_sys_modules()
             module = self._original_builtins_import_method(name, globals, locals, fromlist, level)
             imported_vendorized = False
 
@@ -90,11 +91,13 @@ class VendorImporter(DistributionFinder):
                 module = self._retrieve_absolute_import_module(name, module)
                 self._add_imported_sub_modules_to_vendorized(name, module)
             else:
-                self._sys_modules_state_handler.add_only_vendorized_module(name, module)
+                # Add the non-vendored name to sys modules as well (its in the vendored
+                # sys modules so this should go to `package_modules` only)
+                sys.modules[name] = module
 
             # It's important at the end to return to vendorized sys module if we imported
             # a vendorized package in case an import was made inside this import which changed the state
-            self._sys_modules_state_handler.install_vendorized_sys_modules()
+            self._sys_modules_wrapper.install_vendored_sys_modules()
 
         LOGGER.debug(f"Imported: {module}")
         return module
@@ -106,16 +109,16 @@ class VendorImporter(DistributionFinder):
     ) -> ModuleType:
         # If package is not None it's a relative import
         if not self._should_import_vendorized(name) or package is not None:
-            self._sys_modules_state_handler.remove_vendorized_sys_modules()
+            self._sys_modules_wrapper.remove_vendored_sys_modules()
             return self._original_importlib_import_method(name, package)
 
         vendorized_import_path = self._vendor_import(name)
         try:
-            self._sys_modules_state_handler.install_vendorized_sys_modules()
+            self._sys_modules_wrapper.install_vendored_sys_modules()
             return self._original_importlib_import_method(vendorized_import_path, None)
         except ModuleNotFoundError as exc:
+            self._sys_modules_wrapper.remove_vendored_sys_modules()
             LOGGER.debug(f"Failed to import vendorized: {name}: {exc!s}")
-            self._sys_modules_state_handler.remove_vendorized_sys_modules()
             return self._original_importlib_import_method(name, None)
 
     def _retrieve_absolute_import_module(
@@ -128,7 +131,7 @@ class VendorImporter(DistributionFinder):
             returned_module=module_with_vendor_prefix,
         )
         if module_without_vendor_prefix is None:
-            self._sys_modules_state_handler.install_vendorized_sys_modules()
+            self._sys_modules_wrapper.install_vendored_sys_modules()
             module_without_vendor_prefix = self._retrieve_imported_module_from_sys_modules(
                 self._vendor_import(self._extract_returned_module_name(module_name))
             )
@@ -161,16 +164,13 @@ class VendorImporter(DistributionFinder):
                         self._vendor_import(".".join(packages[: index + 1]))
                     )
             current_module_name = ".".join(packages[: index + 1])
-            self._sys_modules_state_handler.add_only_vendorized_module(current_module_name, current_module)
+            sys.modules[current_module_name] = current_module
 
     def _retrieve_imported_module_from_sys_modules(
         self,
         module_name: str,
     ) -> ModuleType:
-        module = sys.modules.get(
-            module_name,
-            self._sys_modules_state_handler.get_vendorized_module_by_name(module_name),
-        )
+        module = sys.modules.get(module_name)
         if module is None:
             raise ModuleNotFoundError(f"No module named: '{module_name}'")
 
@@ -263,20 +263,25 @@ class VendorImporter(DistributionFinder):
     def install(self) -> None:
         builtins.__import__ = self.builtins_import_override
         importlib.import_module = self.importlib_import_override
+        # Distribution entrypoint loading uses the import_module in `importlib.metadata`
+        # and therefore needs to be overridden as well
+        importlib.metadata.import_module = self.importlib_import_override  # pyright: ignore[reportAttributeAccessIssue]
+
         if self not in sys.meta_path:
             # For distribution finder
             sys.meta_path.append(self)
 
+        sys.modules = self._sys_modules_wrapper
+
     def uninstall(self) -> None:
-        self._sys_modules_state_handler.remove_vendorized_sys_modules()
-        self._sys_modules_state_handler.clear_state()
         builtins.__import__ = self._original_builtins_import_method
         importlib.import_module = self._original_importlib_import_method
+        importlib.metadata.import_module = self._original_importlib_import_method  # pyright: ignore[reportAttributeAccessIssue]
+
         if self in sys.meta_path:
             sys.meta_path.remove(self)
 
-    def clear_vendorized_cache(self) -> None:
-        self._sys_modules_state_handler.clear_state()
+        sys.modules = self._sys_modules_wrapper.original_sys_modules
 
 
 def get_installed_vendor_importer() -> Optional[VendorImporter]:
