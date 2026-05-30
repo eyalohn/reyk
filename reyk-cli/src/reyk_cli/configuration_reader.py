@@ -11,7 +11,7 @@ except ImportError:
 TOOLS_CONFIGURATION_NAME = "tool"
 REYK_CONFIGURATION_NAME = "reyk"
 
-DEFAULT_LIBRARIES_TARGET_PATH = "libs"  # Path the vendorized libraries will be in
+DEFAULT_LIBRARIES_TARGET_PATH = "libs"  # Path the vendored libraries will be in
 DEFAULT_VENDOR_GROUP = "vendor-libs"
 DEFAULT_VENDOR_GROUPS = {DEFAULT_VENDOR_GROUP}
 

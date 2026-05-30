@@ -31,14 +31,14 @@ All fields are optional and fall back to their defaults if omitted.
 ```py
 def isolate_package(
     package_path: Optional[Path] = None,
-    vendorized_libs_dir_name: str = "libs",
+    vendored_libs_dir_name: str = "libs",
 ) -> None:
 ```
 
 ### Parameters
 
 - **`package_path`** (`Path | None`, default: `None`): The path to the package to isolate. When `None`, Reyk automatically detects the directory of the file that called isolate_package(). In almost all cases you can omit this parameter.
-- **`vendorized_libs_dir_name`** (string, default: `"libs"`): The name of the subdirectory inside your package where vendored libraries are stored. This must match the `libraries-path` value in `pyproject.toml`.
+- **`vendored_libs_dir_name`** (string, default: `"libs"`): The name of the subdirectory inside your package where vendored libraries are stored. This must match the `libraries-path` value in `pyproject.toml`.
 
 ## Examples
 
@@ -55,7 +55,7 @@ Calling with a custom libs directory name:
 ```py
 from reyk.isolator import isolate_package
 
-isolate_package(vendorized_libs_dir_name="vendor")
+isolate_package(vendored_libs_dir_name="vendor")
 ```
 
 ```toml
@@ -65,7 +65,7 @@ libraries-path = "vendor"
 
 ## Keeping both surfaces in sync
 
-The `libraries-path` option in `pyproject.toml` and the `vendorized_libs_dir_name` parameter in `isolate_package()` refer to the same directory.
+The `libraries-path` option in `pyproject.toml` and the `vendored_libs_dir_name` parameter in `isolate_package()` refer to the same directory.
 
 If these two values do not match, the CLI will vendor packages into one directory while the runtime hook looks in a different directory.
 Remember to change both values together.
