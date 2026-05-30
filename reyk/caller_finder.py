@@ -43,10 +43,10 @@ def _iterate_over_stack() -> Iterator[StackFrame]:
         current_frame = current_frame.f_back
 
 
-def is_caller_part_of_library(library_name: str) -> bool:
+def is_caller_part_of_library(package_name: str) -> bool:
     try:
         caller_frame = get_caller_frame_outside_reyk()
     except NoCallerOutsideLibFoundError:
         return False
     caller_module_name = caller_frame.module_name
-    return (caller_module_name == library_name) or (caller_module_name.startswith(f"{library_name}."))
+    return (caller_module_name == package_name) or (caller_module_name.startswith(f"{package_name}."))

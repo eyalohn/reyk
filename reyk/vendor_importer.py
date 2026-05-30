@@ -42,14 +42,14 @@ class VendorImporter(DistributionFinder):
     def __init__(
         self,
         package_name: str,
-        vendorized_libs_relative_import_path: str,
-        vendorized_libs_path: Path,
+        vendored_libs_relative_import_path: str,
+        vendored_libs_path: Path,
         original_builtins_import_method: BuiltinsImporter,
         original_importlib_import_method: ImportLibImporter,
     ) -> None:
         self.package_name = package_name
-        self.vendorized_libs_relative_import_path = vendorized_libs_relative_import_path
-        self.vendorized_libs_path = vendorized_libs_path
+        self.vendored_libs_relative_import_path = vendored_libs_relative_import_path
+        self.vendored_libs_path = vendored_libs_path
         self._original_builtins_import_method = original_builtins_import_method
         self._original_importlib_import_method = original_importlib_import_method
         self._sys_modules_wrapper = VendoredSysModules(sys.modules, self.package_name, self.vendor_prefix)
@@ -63,40 +63,40 @@ class VendorImporter(DistributionFinder):
         level: int = 0,
     ) -> ModuleType:
         # Note: ALL import calls should be in this function as to not increase the call stack significantly
-        if not self._should_import_vendorized(name):
-            # If importing a module which shouldn't be vendorized
+        if not self._should_import_vendored(name):
+            # If importing a module which shouldn't be vendored
             # we need to exit the context to ensure we don't retrieve
-            # a vendorized module
+            # a vendored module
             self._sys_modules_wrapper.remove_vendored_sys_modules()
             return self._original_builtins_import_method(name, globals, locals, fromlist, level)
 
-        vendorized_import_path = self._vendor_import(name)
+        vendored_import_path = self._vendor_import(name)
         self._sys_modules_wrapper.install_vendored_sys_modules()
-        imported_vendorized: bool
+        imported_vendored: bool
         try:
-            LOGGER.debug(f"Importing: {vendorized_import_path}")
-            # Install vendorized modules to save us from importing the same module twice
+            LOGGER.debug(f"Importing: {vendored_import_path}")
+            # Install vendored modules to save us from importing the same module twice
             # if it already exists in the sys.modules
-            module = self._original_builtins_import_method(vendorized_import_path, globals, locals, fromlist, level)
-            imported_vendorized = True
+            module = self._original_builtins_import_method(vendored_import_path, globals, locals, fromlist, level)
+            imported_vendored = True
         except ModuleNotFoundError as exc:
-            LOGGER.debug(f"Failed to import vendorized: {name}: {exc!s}")
+            LOGGER.debug(f"Failed to import vendored: {name}: {exc!s}")
             self._sys_modules_wrapper.remove_vendored_sys_modules()
             module = self._original_builtins_import_method(name, globals, locals, fromlist, level)
-            imported_vendorized = False
+            imported_vendored = False
 
-        if imported_vendorized:
+        if imported_vendored:
             is_absolute_import = fromlist is None or len(fromlist) == 0
             if is_absolute_import:
                 module = self._retrieve_absolute_import_module(name, module)
-                self._add_imported_sub_modules_to_vendorized(name, module)
+                self._add_imported_sub_modules_to_vendored(name, module)
             else:
                 # Add the non-vendored name to sys modules as well (its in the vendored
                 # sys modules so this should go to `package_modules` only)
                 sys.modules[name] = module
 
-            # It's important at the end to return to vendorized sys module if we imported
-            # a vendorized package in case an import was made inside this import which changed the state
+            # It's important at the end to return to vendored sys module if we imported
+            # a vendored package in case an import was made inside this import which changed the state
             self._sys_modules_wrapper.install_vendored_sys_modules()
 
         LOGGER.debug(f"Imported: {module}")
@@ -108,17 +108,17 @@ class VendorImporter(DistributionFinder):
         package: Optional[str] = None,
     ) -> ModuleType:
         # If package is not None it's a relative import
-        if not self._should_import_vendorized(name) or package is not None:
+        if not self._should_import_vendored(name) or package is not None:
             self._sys_modules_wrapper.remove_vendored_sys_modules()
             return self._original_importlib_import_method(name, package)
 
-        vendorized_import_path = self._vendor_import(name)
+        vendored_import_path = self._vendor_import(name)
         try:
             self._sys_modules_wrapper.install_vendored_sys_modules()
-            return self._original_importlib_import_method(vendorized_import_path, None)
+            return self._original_importlib_import_method(vendored_import_path, None)
         except ModuleNotFoundError as exc:
             self._sys_modules_wrapper.remove_vendored_sys_modules()
-            LOGGER.debug(f"Failed to import vendorized: {name}: {exc!s}")
+            LOGGER.debug(f"Failed to import vendored: {name}: {exc!s}")
             return self._original_importlib_import_method(name, None)
 
     def _retrieve_absolute_import_module(
@@ -138,14 +138,14 @@ class VendorImporter(DistributionFinder):
 
         return module_without_vendor_prefix
 
-    def _add_imported_sub_modules_to_vendorized(
+    def _add_imported_sub_modules_to_vendored(
         self,
         module_name: str,
         returned_module: ModuleType,
     ) -> None:
         """
-        Adds the imported sub-packages of the returned module to the vendorized modules state.
-        For example if we perform a vendorized: `import example_library.module` then we
+        Adds the imported sub-packages of the returned module to the vendored modules state.
+        For example if we perform a vendored: `import example_library.module` then we
         return `example_library` but in the sys modules there will only be:
         1. `example_project.libs.example_library`
         2. `example_project.libs.example_library.module`
@@ -211,17 +211,17 @@ class VendorImporter(DistributionFinder):
         returned_module_attribute, _, _ = module_name.partition(".")
         return returned_module_attribute
 
-    def _should_import_vendorized(
+    def _should_import_vendored(
         self,
         name: str,
     ) -> bool:
         if name.startswith(RELATIVE_IMPORT_PREFIX):
-            LOGGER.debug("Relative imports don't require changing the import path for vendorized packages")
+            LOGGER.debug("Relative imports don't require changing the import path for vendored packages")
             return False
 
         if name.startswith(self.vendor_prefix):
             LOGGER.debug(
-                "The attempted import is already for a vendorized package therefore there's "
+                "The attempted import is already for a vendored package therefore there's "
                 "no need to change the import path"
             )
             return False
@@ -252,13 +252,13 @@ class VendorImporter(DistributionFinder):
             LOGGER.debug("Returning empty list in find_distributions because not part of library")
             return []
 
-        LOGGER.debug(f"Returning all distributions in vendorized path: {self.vendorized_libs_path}")
-        vars(context).update({"path": [str(self.vendorized_libs_path)]})
+        LOGGER.debug(f"Returning all distributions in vendored path: {self.vendored_libs_path}")
+        vars(context).update({"path": [str(self.vendored_libs_path)]})
         return MetadataPathFinder.find_distributions(context)
 
     @property
     def vendor_prefix(self) -> str:
-        return f"{self.package_name}.{self.vendorized_libs_relative_import_path}"
+        return f"{self.package_name}.{self.vendored_libs_relative_import_path}"
 
     def install(self) -> None:
         builtins.__import__ = self.builtins_import_override

@@ -23,7 +23,7 @@ def main(
     config: Annotated[
         Path,
         typer.Option(
-            help="Where to find pyproject.toml containing vendorized dependencies",
+            help="Where to find pyproject.toml containing vendored dependencies",
             file_okay=True,
             dir_okay=False,
             exists=True,

@@ -24,5 +24,5 @@ def _is_package(path: Path) -> bool:
 
 
 def is_part_of_stdlib(module_name: str) -> bool:
-    library_name, _, _ = module_name.partition(".")
-    return library_name in list_stdlib_modules()
+    package_or_module_name, _, _ = module_name.partition(".")
+    return package_or_module_name in list_stdlib_modules()
