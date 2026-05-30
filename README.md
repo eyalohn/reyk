@@ -1,6 +1,6 @@
 # Reyk
 
-[![Tests](https://github.com/eyalohn/reyk/actions/workflows/test.yml/badge.svg)](https://github.com/eyalohn/reyk/actions/workflows/test.yml)
+[![Tests](https://github.com/eyalohn/reyk/actions/workflows/ci.yml/badge.svg)](https://github.com/eyalohn/reyk/actions/workflows/ci.yml)
 [![Coverage](https://coverage-badge.samuelcolvin.workers.dev/eyalohn/reyk.svg)](https://coverage-badge.samuelcolvin.workers.dev/redirect/eyalohn/reyk)
 [![Latest Version](https://img.shields.io/pypi/v/reyk.svg)](https://pypi.python.org/pypi/reyk/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/reyk.svg)](https://pypi.python.org/pypi/reyk/)
