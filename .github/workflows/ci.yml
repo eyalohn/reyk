@@ -1,11 +1,40 @@
-name: Tests
+name: CI
 
 on:
   push:
     branches:
-      - '**'
+      - main
+      - feature/pypi-publish
+
+  pull_request: {}
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: Lint ${{ matrix.python-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        # Pip is required for pre-commit (https://pre-commit.com/#python):
+        run: |
+          uv sync --group dev --all-extras --all-packages
+          uv pip install pip
+      - uses: pre-commit/action@v3.0.1
+        with:
+          extra_args: --all-files --verbose
+        env:
+          SKIP: no-commit-to-branch
+          UV_NO_PROGRESS: '1'
+
   pytest:
     runs-on: ${{ matrix.os }}
     name: Test ${{ matrix.os }} / ${{ matrix.python-version }}
@@ -113,3 +142,50 @@ jobs:
           path: coverage/htmlcov
           include-hidden-files: true
       - run: uv run coverage report
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [pytest, lint]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+
+        with:
+          python-version: "3.12"
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Build release distributions
+        run: uv build
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+
+  pypi-publish:
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/feature/pypi-publish'
+
+    permissions:
+      id-token: write
+
+    environment:
+      name: release
+
+    steps:
+      - name: Retrieve release distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+
+      - name: Publish release distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          repository-url: https://test.pypi.org/legacy/
