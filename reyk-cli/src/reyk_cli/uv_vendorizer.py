@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import typer
+
 from reyk_cli.command_executor import run_command_exit_on_fail
 
 LOCK_FILE_NAME = "vendor.lock"
@@ -42,6 +43,7 @@ class UVBasedVendorizer:
             [
                 "uv",
                 "export",
+                "--no-default-groups",
                 *itertools.chain.from_iterable([("--group", group) for group in self._vendor_groups]),
                 "--no-header",
                 "--quiet",
