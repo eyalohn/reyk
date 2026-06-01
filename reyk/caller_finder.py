@@ -8,6 +8,7 @@ from reyk.stdlib_finder import is_part_of_stdlib
 
 LOGGER = logging.getLogger(__name__)
 MY_PACKAGE_NAME = __package__
+MAIN_MODULE_NAME = "__main__"
 
 
 class NoCallerOutsideLibFoundError(RuntimeError): ...
@@ -36,9 +37,13 @@ def get_caller_frame_outside_reyk() -> StackFrame:
 def _iterate_over_stack() -> Iterator[StackFrame]:
     current_frame = sys._getframe(1)  # noqa: SLF001
     while current_frame is not None:
+        module_name = current_frame.f_globals["__name__"]
+        if module_name == MAIN_MODULE_NAME:
+            module_name = current_frame.f_globals["__spec__"].name
+
         yield StackFrame(
             filename=Path(current_frame.f_code.co_filename),
-            module_name=current_frame.f_globals["__name__"],
+            module_name=module_name,
         )
         current_frame = current_frame.f_back
 
@@ -48,5 +53,6 @@ def is_caller_part_of_library(package_name: str) -> bool:
         caller_frame = get_caller_frame_outside_reyk()
     except NoCallerOutsideLibFoundError:
         return False
+
     caller_module_name = caller_frame.module_name
     return (caller_module_name == package_name) or (caller_module_name.startswith(f"{package_name}."))

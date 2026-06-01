@@ -205,6 +205,39 @@ def test_import_library_package_from_library(
     "variable_access_statement",
     generate_variable_access_statement_params(
         ALL_IMPORT_TECHNIQUES_BUT_RELATIVE,
+        "example_library.module",
+        MY_STRING_NAME,
+    ),
+)
+def test_main_module_using_library(
+    variable_access_statement: str,
+    files_manager: ExampleProjectFileManager,
+) -> None:
+    files_manager.create_library_module(
+        library_name="example_library",
+        module_name="module",
+        content=f"from example_library.example_package import {MY_STRING_NAME}",
+    )
+    files_manager.create_library_module(
+        library_name="example_library",
+        module_name="example_package.__init__",
+        content=MY_STRING_DECLARATION_MODULE,
+    )
+    files_manager.create_project_module(
+        module_name="module",
+        content=f"""
+# Change to act as the __main__ module
+__name__ = "__main__"
+{variable_access_statement}
+""",
+    )
+    _assert_my_string_in_module()
+
+
+@pytest.mark.parametrize(
+    "variable_access_statement",
+    generate_variable_access_statement_params(
+        ALL_IMPORT_TECHNIQUES_BUT_RELATIVE,
         "example_library",
         MY_STRING_NAME,
     ),
