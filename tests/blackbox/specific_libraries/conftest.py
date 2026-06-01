@@ -1,3 +1,4 @@
 from pathlib import Path
+from tests.blackbox.project_paths import SPECIFIC_LIBRARIES_INSTALLATION_PATH
 
-collect_ignore = [Path(__file__).parent / "test_libs"]
+collect_ignore = [SPECIFIC_LIBRARIES_INSTALLATION_PATH]
