@@ -43,8 +43,7 @@ class UVBasedVendorizer:
             [
                 "uv",
                 "export",
-                "--no-default-groups",
-                *itertools.chain.from_iterable([("--group", group) for group in self._vendor_groups]),
+                *itertools.chain.from_iterable([("--only-group", group) for group in self._vendor_groups]),
                 "--no-header",
                 "--quiet",
                 "--no-emit-project",
