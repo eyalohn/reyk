@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - feature/publish-reyk-cli-pypi
 
   pull_request: {}
 
