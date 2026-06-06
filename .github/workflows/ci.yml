@@ -214,10 +214,10 @@ jobs:
           path: dist/
 
   pypi-publish:
-    name: Publish to PyPI (${{ matrix.package }})
+    name: Publish to PyPI
     runs-on: ubuntu-latest
     needs: [build]
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/feature/publish-reyk-cli-pypi'
     strategy:
       fail-fast: false
       matrix:
