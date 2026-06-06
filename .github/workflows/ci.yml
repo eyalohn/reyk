@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - feature/publish-reyk-cli-pypi
 
   pull_request: {}
 
@@ -214,10 +213,9 @@ jobs:
           path: dist/
 
   pypi-publish:
-    name: Publish to PyPI
     runs-on: ubuntu-latest
     needs: [build]
-    if: github.ref == 'refs/heads/feature/publish-reyk-cli-pypi'
+    if: github.ref == 'refs/heads/master'
     strategy:
       fail-fast: false
       matrix:
