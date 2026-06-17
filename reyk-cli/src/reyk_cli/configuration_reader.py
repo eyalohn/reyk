@@ -20,6 +20,7 @@ DEFAULT_VENDOR_GROUPS = {DEFAULT_VENDOR_GROUP}
 class ReykConfiguration:
     libraries_path: str
     vendor_groups: set[str]
+    vendor_exclusions: set[str]
 
 
 def read_reyk_configuration(toml_path: Path) -> ReykConfiguration:
@@ -30,4 +31,5 @@ def read_reyk_configuration(toml_path: Path) -> ReykConfiguration:
     )
     configuration["libraries_path"] = configuration.pop("libraries-path", DEFAULT_LIBRARIES_TARGET_PATH)
     configuration["vendor_groups"] = set(configuration.pop("vendor-groups", DEFAULT_VENDOR_GROUPS))
+    configuration["vendor_exclusions"] = set(configuration.pop("vendor-exclusions", set()))
     return ReykConfiguration(**configuration)

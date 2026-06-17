@@ -10,6 +10,8 @@ from reyk_cli.configuration_reader import (
 
 PYPROJECT_TOML_NAME = "pyproject.toml"
 DIST_INFO_SUBSTRING = "dist-info"
+BINARIES_DIRECTORY_NAME = "bin"
+
 PYPROJECT_EXAMPLE: dict[str, Any] = {
     "project": {
         "name": "project-example",
@@ -26,7 +28,7 @@ class ExampleProject:
     def __init__(self, project_path: Path, configuration: Optional[ReykConfiguration]) -> None:
         self._project_path = project_path
         self._configuration = (
-            ReykConfiguration(DEFAULT_LIBRARIES_TARGET_PATH, DEFAULT_VENDOR_GROUPS)
+            ReykConfiguration(DEFAULT_LIBRARIES_TARGET_PATH, DEFAULT_VENDOR_GROUPS, set())
             if configuration is None
             else configuration
         )
@@ -37,11 +39,13 @@ class ExampleProject:
         if (
             self._configuration.libraries_path != DEFAULT_LIBRARIES_TARGET_PATH
             or self._configuration.vendor_groups != DEFAULT_VENDOR_GROUPS
+            or len(self._configuration.vendor_exclusions) > 0
         ):
             pyproject["tool"] = {
                 "reyk": {
                     "libraries-path": self._configuration.libraries_path,
                     "vendor-groups": list(self._configuration.vendor_groups),
+                    "vendor-exclusions": list(self._configuration.vendor_exclusions),
                 },
             }
 
@@ -52,7 +56,11 @@ class ExampleProject:
         return {
             library_path.name
             for library_path in (self._project_path / self._configuration.libraries_path).iterdir()
-            if library_path.is_dir() and DIST_INFO_SUBSTRING not in library_path.name
+            if (
+                library_path.is_dir()
+                and library_path.name != BINARIES_DIRECTORY_NAME
+                and DIST_INFO_SUBSTRING not in library_path.name
+            )
         }
 
     def has_libs_directory(self) -> bool:
