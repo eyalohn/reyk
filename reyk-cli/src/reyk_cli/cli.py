@@ -35,6 +35,7 @@ def main(
     ctx.obj = UVBasedVendorizer(
         project_root=config.parent,
         vendor_groups=reyk_config.vendor_groups,
+        vendor_exclusions=reyk_config.vendor_exclusions,
         libraries_target_path=Path(reyk_config.libraries_path),
     )
 

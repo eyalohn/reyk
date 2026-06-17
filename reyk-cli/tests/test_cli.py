@@ -59,7 +59,13 @@ def test_add_to_unrelated_group(runner: CliRunner, example_project: ExampleProje
 
 @pytest.mark.parametrize(
     "example_project",
-    [ReykConfiguration(DEFAULT_LIBRARIES_TARGET_PATH, {DEFAULT_VENDOR_GROUP, "another-vendored-group"})],
+    [
+        ReykConfiguration(
+            libraries_path=DEFAULT_LIBRARIES_TARGET_PATH,
+            vendor_groups={DEFAULT_VENDOR_GROUP, "another-vendored-group"},
+            vendor_exclusions=set(),
+        ),
+    ],
     indirect=True,
 )
 def test_add_to_new_vendor_groups(runner: CliRunner, example_project: ExampleProject) -> None:
@@ -73,7 +79,13 @@ def test_add_to_new_vendor_groups(runner: CliRunner, example_project: ExamplePro
 
 @pytest.mark.parametrize(
     "example_project",
-    [ReykConfiguration(DEFAULT_LIBRARIES_TARGET_PATH, {"different-vendored-group"})],
+    [
+        ReykConfiguration(
+            libraries_path=DEFAULT_LIBRARIES_TARGET_PATH,
+            vendor_groups={"different-vendored-group"},
+            vendor_exclusions=set(),
+        ),
+    ],
     indirect=True,
 )
 def test_change_vendor_libs(runner: CliRunner, example_project: ExampleProject) -> None:
@@ -91,7 +103,13 @@ def test_sync_no_vendor_groups(runner: CliRunner, example_project: ExampleProjec
 
 @pytest.mark.parametrize(
     "example_project",
-    [ReykConfiguration("different_libs", DEFAULT_VENDOR_GROUPS)],
+    [
+        ReykConfiguration(
+            libraries_path="different_libs",
+            vendor_groups=DEFAULT_VENDOR_GROUPS,
+            vendor_exclusions=set(),
+        ),
+    ],
     indirect=True,
 )
 def test_change_vendor_target(runner: CliRunner, example_project: ExampleProject) -> None:
@@ -99,3 +117,21 @@ def test_change_vendor_target(runner: CliRunner, example_project: ExampleProject
     assert result.exit_code == 0
 
     assert example_project.get_existing_libraries() == {"tomli"}
+
+
+@pytest.mark.parametrize(
+    "example_project",
+    [
+        ReykConfiguration(
+            libraries_path=DEFAULT_LIBRARIES_TARGET_PATH,
+            vendor_groups=DEFAULT_VENDOR_GROUPS,
+            vendor_exclusions={"colorama"},
+        ),
+    ],
+    indirect=True,
+)
+def test_vendor_exclusions(runner: CliRunner, example_project: ExampleProject) -> None:
+    result = runner.invoke(app, ["add", "tqdm"])
+    assert result.exit_code == 0
+
+    assert example_project.get_existing_libraries() == {"tqdm"}

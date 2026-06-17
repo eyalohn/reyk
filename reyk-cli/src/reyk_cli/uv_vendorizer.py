@@ -10,9 +10,16 @@ LOCK_FILE_NAME = "vendor.lock"
 
 
 class UVBasedVendorizer:
-    def __init__(self, project_root: Path, vendor_groups: set[str], libraries_target_path: Path) -> None:
+    def __init__(
+        self,
+        project_root: Path,
+        vendor_groups: set[str],
+        vendor_exclusions: set[str],
+        libraries_target_path: Path,
+    ) -> None:
         self._project_root = project_root
         self._vendor_groups = vendor_groups
+        self._vendor_exclusions = vendor_exclusions
         self._libraries_target_path = libraries_target_path
 
     def add_new_requirement_to_pyproject(self, vendor_group: str, command_args: Sequence[str]) -> None:
@@ -44,6 +51,7 @@ class UVBasedVendorizer:
                 "uv",
                 "export",
                 *itertools.chain.from_iterable([("--only-group", group) for group in self._vendor_groups]),
+                *itertools.chain.from_iterable([("--no-emit-package", package) for package in self._vendor_exclusions]),
                 "--no-header",
                 "--quiet",
                 "--no-emit-project",
