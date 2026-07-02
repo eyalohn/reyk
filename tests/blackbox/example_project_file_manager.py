@@ -4,8 +4,8 @@ import shutil
 
 class ExampleProjectFileManager:
     def __init__(self, project_path: Path, libraries_dir_relative_path: Path) -> None:
-        self._project_path = project_path
-        self._libraries_dir_relative_path = libraries_dir_relative_path
+        self.project_path = project_path
+        self.libraries_dir_relative_path = libraries_dir_relative_path
         self._created_files = set[Path]()
         self._created_directories = set[Path]()
 
@@ -28,7 +28,7 @@ class ExampleProjectFileManager:
         content: str,
     ) -> Path:
         return self.create_project_file(
-            file_name=str(self._libraries_dir_relative_path / library_name / file_name),
+            file_name=str(self.libraries_dir_relative_path / library_name / file_name),
             content=content,
         )
 
@@ -37,7 +37,7 @@ class ExampleProjectFileManager:
         library_name: str,
     ) -> Path:
         return self.create_project_file(
-            file_name=str(self._libraries_dir_relative_path / f"{library_name}.dist-info" / "METADATA"),
+            file_name=str(self.libraries_dir_relative_path / f"{library_name}.dist-info" / "METADATA"),
             content=f"Metadata-Version: 2.4\nName: {library_name}",
         )
 
@@ -48,7 +48,7 @@ class ExampleProjectFileManager:
         )
 
     def create_project_file(self, file_name: str, content: str) -> Path:
-        project_file = self._project_path / file_name
+        project_file = self.project_path / file_name
         if not project_file.parent.exists():
             project_file.parent.mkdir(parents=True)
             self._created_directories.add(project_file.parent)
@@ -61,7 +61,7 @@ class ExampleProjectFileManager:
         return module_name.replace(".", "/") + ".py"
 
     def remove_pycache_directories(self) -> None:
-        for pycache_directory in self._project_path.rglob("__pycache__"):
+        for pycache_directory in self.project_path.rglob("__pycache__"):
             if pycache_directory.is_dir():
                 shutil.rmtree(pycache_directory)
 

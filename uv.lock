@@ -936,7 +936,7 @@ testing-extra = [{ name = "pytest-memray", marker = "platform_python_implementat
 
 [[package]]
 name = "reyk-cli"
-version = "0.1.0"
+version = "0.0.1"
 source = { editable = "reyk-cli" }
 dependencies = [
     { name = "tomli", marker = "python_full_version < '3.11'" },
@@ -950,9 +950,6 @@ dev = [
     { name = "pytest", version = "9.0.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "tomli-w" },
 ]
-vendor-libs = [
-    { name = "tomli" },
-]
 
 [package.metadata]
 requires-dist = [
@@ -965,7 +962,6 @@ dev = [
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "tomli-w", specifier = ">=1.2.0" },
 ]
-vendor-libs = [{ name = "tomli" }]
 
 [[package]]
 name = "rich"

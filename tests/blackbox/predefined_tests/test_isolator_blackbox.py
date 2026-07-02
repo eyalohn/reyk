@@ -5,6 +5,7 @@ from importlib.metadata import Distribution
 from pathlib import Path
 
 import pytest
+from reyk.vendor_importer import get_installed_vendor_importer
 
 from tests.blackbox.test_distributions_finder import assert_distribution_names_subset
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
@@ -24,11 +25,11 @@ from tests.blackbox.project_paths import EXAMPLE_PROJECT_LIBRARIES_PATH
 # the fixture in conftest.py
 
 
-MY_STRING_DECLARATION_MODULE = """
-MY_STRING = "Imported"
-"""
 MY_STRING_NAME = "MY_STRING"
 MY_STRING_EXPECTED_VALUE = "Imported"
+MY_STRING_DECLARATION_MODULE = f"""
+{MY_STRING_NAME} = "{MY_STRING_EXPECTED_VALUE}"
+"""
 
 
 @pytest.mark.parametrize(
@@ -506,6 +507,56 @@ MY_MODULE_NAME = partial_module.__name__
     import example_project.module
 
     assert example_project.module.MY_MODULE_NAME == "example_project.libs.example_library"
+
+
+@pytest.mark.parametrize("import_child_string_first", [True, False])
+def test_multiple_isolation_parent_first(
+    *,
+    files_manager: ExampleProjectFileManager,
+    import_child_string_first: bool,
+) -> None:
+    files_manager.create_library_module(
+        library_name="isolated_library",
+        module_name=f"{files_manager.libraries_dir_relative_path}.test_library.module",
+        content="MY_STRING = 'grandchild'",
+    )
+    files_manager.create_library_module(
+        library_name="isolated_library",
+        module_name="module",
+        content="""
+from reyk.isolator import isolate_package
+isolate_package()
+
+def import_my_string() -> str:
+    from test_library.module import MY_STRING
+    return MY_STRING
+""",
+    )
+
+    files_manager.create_library_module(
+        library_name="test_library",
+        module_name="module",
+        content="MY_STRING = 'child'",
+    )
+    import_my_string_statement = "ISOLATED_MY_STRING = import_my_string()"
+    files_manager.create_project_module(
+        module_name="parent_module",
+        content=f"""
+from isolated_library.module import import_my_string
+{import_my_string_statement if import_child_string_first else ""}
+from test_library.module import MY_STRING as EXAMPLE_MY_STRING
+{"" if import_child_string_first else import_my_string_statement}
+""",
+    )
+    try:
+        from example_project import parent_module  # pyright: ignore[reportAttributeAccessIssue]
+
+        assert parent_module.ISOLATED_MY_STRING == "grandchild"
+        assert parent_module.EXAMPLE_MY_STRING == "child"
+    finally:
+        vendor_importer = get_installed_vendor_importer()
+        if vendor_importer is not None and vendor_importer.package_name == "isolated_library":
+            vendor_importer.uninstall()
 
 
 def test_file_attribute_correct(files_manager: ExampleProjectFileManager) -> None:

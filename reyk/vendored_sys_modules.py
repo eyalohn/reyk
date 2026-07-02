@@ -1,16 +1,8 @@
 from collections import UserDict
 from collections.abc import MutableMapping
-from dataclasses import dataclass
 from types import ModuleType
 from reyk.caller_finder import is_caller_part_of_library
 from reyk.stdlib_finder import is_part_of_stdlib
-
-
-@dataclass
-class SysModulesSnapshot:
-    original_sys_modules: dict[str, ModuleType]
-    user_modules: dict[str, ModuleType]
-    package_modules: dict[str, ModuleType]
 
 
 class VendoredSysModules(UserDict[str, ModuleType]):
@@ -61,22 +53,6 @@ class VendoredSysModules(UserDict[str, ModuleType]):
             self.original_sys_modules.pop(module_name, None)
 
         self.original_sys_modules.update(new_sys_modules)
-
-    def take_snapshot(self) -> SysModulesSnapshot:
-        return SysModulesSnapshot(
-            original_sys_modules=self.original_sys_modules.copy(),
-            user_modules=self._user_modules.copy(),
-            package_modules=self._package_modules.copy(),
-        )
-
-    def restore_snapshot(self, snapshot: SysModulesSnapshot) -> None:
-        for current_modules, snapshot_modules in (
-            (self.original_sys_modules, snapshot.original_sys_modules),
-            (self._user_modules, snapshot.user_modules),
-            (self._package_modules, snapshot.package_modules),
-        ):
-            current_modules.clear()
-            current_modules.update(snapshot_modules)
 
     def __setitem__(self, key: str, value: ModuleType) -> None:
         module_name = value.__name__

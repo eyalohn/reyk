@@ -4,8 +4,14 @@ import sys
 from pathlib import Path
 
 from reyk.caller_finder import get_caller_frame_outside_reyk
-from reyk.isolator import create_vendor_importer, isolate_package
-from reyk.vendor_importer import VendorImporter, get_installed_vendor_importer
+from reyk.isolator import create_vendor_importer, isolate_package, PackageInfo
+from reyk.vendor_importer import get_installed_vendor_importer
+
+
+FAKE_PACKAGE_INFO = PackageInfo(
+    package_name="fake_package_for_fake_installation",
+    package_path=Path("fake_package_for_fake_installation"),
+)
 
 
 def test_get_caller() -> None:
@@ -18,7 +24,7 @@ def test_get_vendor_importer_nothing_installed() -> None:
 
 
 def test_get_vendor_importer_install_and_uninstall() -> None:
-    isolate_package(Path("fake_package_for_fake_installation"))
+    isolate_package(FAKE_PACKAGE_INFO)
     vendor_importer = get_installed_vendor_importer()
     assert vendor_importer in sys.meta_path
     assert vendor_importer is not None
@@ -28,7 +34,7 @@ def test_get_vendor_importer_install_and_uninstall() -> None:
 
 
 def test_get_vendor_importer_install_and_uninstall_with_meta_path_manipulation() -> None:
-    vendor_importer = create_vendor_importer(Path("fake_package_for_fake_installation"))
+    vendor_importer = create_vendor_importer(FAKE_PACKAGE_INFO)
     sys.meta_path.append(vendor_importer)
     vendor_importer.install()
     assert sys.meta_path.count(vendor_importer) == 1

@@ -8,6 +8,7 @@ from reyk_cli.configuration_reader import (
 )
 from typer.testing import CliRunner
 
+from tests.blackbox.project_paths import EXAMPLE_PROJECT_NAME
 from tests.example_project import ExampleProject
 
 
@@ -58,7 +59,7 @@ def test_add_to_unrelated_group(runner: CliRunner, example_project: ExampleProje
 
 
 @pytest.mark.parametrize(
-    "example_project",
+    EXAMPLE_PROJECT_NAME,
     [
         ReykConfiguration(
             libraries_path=DEFAULT_LIBRARIES_TARGET_PATH,
@@ -78,7 +79,7 @@ def test_add_to_new_vendor_groups(runner: CliRunner, example_project: ExamplePro
 
 
 @pytest.mark.parametrize(
-    "example_project",
+    EXAMPLE_PROJECT_NAME,
     [
         ReykConfiguration(
             libraries_path=DEFAULT_LIBRARIES_TARGET_PATH,
@@ -102,7 +103,7 @@ def test_sync_no_vendor_groups(runner: CliRunner, example_project: ExampleProjec
 
 
 @pytest.mark.parametrize(
-    "example_project",
+    EXAMPLE_PROJECT_NAME,
     [
         ReykConfiguration(
             libraries_path="different_libs",
@@ -120,7 +121,7 @@ def test_change_vendor_target(runner: CliRunner, example_project: ExampleProject
 
 
 @pytest.mark.parametrize(
-    "example_project",
+    EXAMPLE_PROJECT_NAME,
     [
         ReykConfiguration(
             libraries_path=DEFAULT_LIBRARIES_TARGET_PATH,

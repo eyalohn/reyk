@@ -3,6 +3,7 @@ import importlib
 import logging
 from pathlib import Path
 from typing import Optional, cast
+from dataclasses import dataclass
 
 from reyk.caller_finder import get_caller_frame_outside_reyk
 from reyk.vendor_importer import BuiltinsImporter, VendorImporter
@@ -10,14 +11,24 @@ from reyk.vendor_importer import BuiltinsImporter, VendorImporter
 LOGGER = logging.getLogger(__name__)
 
 
-def isolate_package(package_path: Optional[Path] = None, vendored_libs_directory_import_path: str = "libs") -> None:
-    vendor_importer = create_vendor_importer(package_path, vendored_libs_directory_import_path)
+@dataclass
+class PackageInfo:
+    package_name: str
+    package_path: Path
+
+
+def isolate_package(
+    package_info: Optional[PackageInfo] = None,
+    vendored_libs_directory_import_path: str = "libs",
+) -> VendorImporter:
+    vendor_importer = create_vendor_importer(package_info, vendored_libs_directory_import_path)
     LOGGER.debug(f"Isolating library: {vendor_importer.package_name} ({vendored_libs_directory_import_path=})")
     vendor_importer.install()
+    return vendor_importer
 
 
 def create_vendor_importer(
-    package_path: Optional[Path] = None,
+    package_info: Optional[PackageInfo] = None,
     vendored_libs_directory_import_path: str = "libs",
 ) -> VendorImporter:
     """
@@ -31,13 +42,17 @@ def create_vendor_importer(
     `import libs` but if it's a subdirectory like 'my/libs' it should be 'my.libs' for
     `import my.libs`.
     """
-    if package_path is None:
-        package_path = get_caller_frame_outside_reyk().filename.parent
+    if package_info is None:
+        caller = get_caller_frame_outside_reyk()
+        package, _, _ = caller.module_name.rpartition(".")
+        package_info = PackageInfo(
+            package_name=package,
+            package_path=caller.filename.parent,
+        )
 
-    package_name = package_path.name
-    vendored_libs_path = package_path / vendored_libs_directory_import_path
+    vendored_libs_path = package_info.package_path / vendored_libs_directory_import_path
     return VendorImporter(
-        package_name,
+        package_info.package_name,
         vendored_libs_directory_import_path,
         vendored_libs_path,
         # Cast as for some reason the definition of __import__ thinks fromlist is not nullable
