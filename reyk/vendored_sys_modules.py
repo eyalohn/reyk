@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import itertools
 from types import ModuleType
 from collections.abc import Iterable
+from typing import Optional
 from reyk.caller_finder import get_caller_matching_package
 from reyk.reyk_isolator import VendorPackage
 from reyk.stdlib_finder import is_part_of_stdlib
@@ -36,7 +37,7 @@ class VendoredSysModules(UserDict[str, ModuleType]):
         self.original_sys_modules = original_sys_modules
         self._user_modules: dict[str, ModuleType] = original_sys_modules.copy()
         self._package_to_vendor_modules: dict[str, VendorPackageModules] = {}
-        self._current_installed_package_name: str | None = None
+        self._current_installed_package_name: Optional[str] = None
 
     def add_package(self, package: VendorPackage) -> None:
         self._package_to_vendor_modules[package.package_name] = VendorPackageModules(
@@ -134,7 +135,7 @@ class VendoredSysModules(UserDict[str, ModuleType]):
                 if vendored_package_node_name not in modules:
                     modules[vendored_package_node_name] = package_mod
 
-    def _find_module_from_all_module_dicts(self, module_name: str) -> ModuleType | None:
+    def _find_module_from_all_module_dicts(self, module_name: str) -> Optional[ModuleType]:
         for module_dict in self._all_module_dicts:
             mod = module_dict.get(module_name)
             if mod is not None:
@@ -150,6 +151,7 @@ class VendoredSysModules(UserDict[str, ModuleType]):
         )
 
     def _get_vendored_package_trees(self) -> set[str]:
+        # TODO(Eyal): Can this be faster/cached?  # noqa: FIX002, TD003
         return self._get_package_trees(set(self._package_to_vendor_modules.keys()))
 
     def _get_package_trees(self, packages: set[str]) -> set[str]:

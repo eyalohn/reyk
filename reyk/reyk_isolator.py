@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Optional, cast
 from abc import abstractmethod
 import builtins
 from dataclasses import dataclass
@@ -7,6 +7,12 @@ from pathlib import Path
 
 
 REYK_COMMUNICATION_ATTRIBUTE_NAME = "_reyk_communication"
+"""
+This attribute is set in `builtins` to facilitate 'communication' between reyk instances.
+We intentionally don't use the `__import__` override to not depend on the reyk
+implementation (which might in the future not depend on overriding `__import__`).
+"""
+
 DEFAULT_VENDOR_LIBS_IMPORT_PATH = "libs"
 
 
@@ -26,7 +32,7 @@ class VendorPackage:
     """
     Package to isolate - should be like `reyk` or like `reyk.sub_package`
     """
-    vendor_libs_import_path: str | None = None
+    vendor_libs_import_path: Optional[str] = None
     """
     The import path for the vendored libraries ie: `reyk.libs` or `libs`.
     The default (if `None`) will be the `{package_name}.libs`.
@@ -80,5 +86,5 @@ def uninstall_reyk() -> None:
     delattr(builtins, REYK_COMMUNICATION_ATTRIBUTE_NAME)
 
 
-def get_installed_reyk() -> ReykIsolator | None:
-    return cast(ReykIsolator | None, getattr(builtins, REYK_COMMUNICATION_ATTRIBUTE_NAME, None))
+def get_installed_reyk() -> Optional[ReykIsolator]:
+    return cast(Optional[ReykIsolator], getattr(builtins, REYK_COMMUNICATION_ATTRIBUTE_NAME, None))

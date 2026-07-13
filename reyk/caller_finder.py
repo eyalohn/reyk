@@ -1,5 +1,6 @@
 import logging
 import sys
+from typing import Optional
 from dataclasses import dataclass
 from pathlib import Path
 from collections.abc import Iterable
@@ -20,7 +21,7 @@ class StackFrame:
     module_name: str
 
 
-def get_caller_matching_package(package_names: Iterable[str]) -> str | None:
+def get_caller_matching_package(package_names: Iterable[str]) -> Optional[str]:
     """Returns the deepest matching package name to the caller"""
     try:
         caller_frame = get_caller_frame_outside_reyk()

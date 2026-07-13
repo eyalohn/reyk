@@ -2,7 +2,7 @@ from importlib.abc import MetaPathFinder
 from importlib.metadata import MetadataPathFinder
 import sys
 from pathlib import Path
-from typing import cast
+from typing import Optional, cast
 
 import pytest
 
@@ -35,7 +35,7 @@ def test_get_caller() -> None:
         pytest.param(["tests", "tests.internals"], "tests.internals", id="two matching packages chooses max depth"),
     ],
 )
-def test_get_caller_matching_package(package_names: list[str], expected_output: str | None) -> None:
+def test_get_caller_matching_package(package_names: list[str], expected_output: Optional[str]) -> None:
     matching_package = get_caller_matching_package(package_names)
     assert matching_package == expected_output
 
