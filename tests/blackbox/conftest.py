@@ -3,11 +3,10 @@ import sys
 from collections.abc import Callable, Iterable
 from importlib.metadata import Distribution
 from pathlib import Path
-from typing import cast
 
 import pytest
-from reyk.isolator import PackageInfo, isolate_package
-from reyk.vendor_importer import get_installed_vendor_importer
+from reyk.isolator import isolate_package
+from reyk.reyk_isolator import VendorPackage, uninstall_reyk
 
 from tests.blackbox.test_distributions_finder import find_distributions_from_library, find_distributions_from_project
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
@@ -16,6 +15,7 @@ from tests.blackbox.project_paths import (
     EXAMPLE_PROJECT_LIBRARIES_DIRECTORY_RELATIVE_PATH,
     EXAMPLE_PROJECT_NAME,
     EXAMPLE_PROJECT_PATH,
+    EXAMPLE_PROJECT_LIBRARIES_PATH,
     TEST_LIBRARIES_DIRECTORY_PATH,
 )
 
@@ -31,11 +31,9 @@ def install_project_in_path() -> Iterable[None]:
 
 @pytest.fixture(autouse=True)
 def setup_vendor_importer() -> Iterable[None]:
-    isolate_package(PackageInfo(package_name=EXAMPLE_PROJECT_NAME, package_path=EXAMPLE_PROJECT_PATH))
+    isolate_package(VendorPackage(package_name=EXAMPLE_PROJECT_NAME, vendor_libs_path=EXAMPLE_PROJECT_LIBRARIES_PATH))
     yield
-    vendor_importer = get_installed_vendor_importer()
-    assert vendor_importer is not None
-    vendor_importer.uninstall()
+    uninstall_reyk()
 
 
 @pytest.fixture
