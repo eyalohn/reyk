@@ -6,7 +6,7 @@ from types import ModuleType
 from collections.abc import Iterable
 from typing import Optional
 from reyk.caller_finder import get_caller_matching_package
-from reyk.reyk_isolator import VendorPackage
+from reyk.isolator_definition import VendorPackage
 from reyk.stdlib_finder import is_part_of_stdlib
 
 
@@ -14,6 +14,35 @@ from reyk.stdlib_finder import is_part_of_stdlib
 class VendorPackageModules:
     vendor_package: VendorPackage
     modules: dict[str, ModuleType]
+
+
+class VendorPackages:
+    def __init__(self) -> None:
+        self._package_to_vendor_modules: dict[str, VendorPackageModules] = {}
+        self._cached_package_trees: set[str] = set()
+
+    def add_package(self, package_modules: VendorPackageModules) -> None:
+        self._package_to_vendor_modules[package_modules.vendor_package.package_name] = package_modules
+        self._cached_package_trees = self.calculate_package_trees()
+
+    def add_module_to_all_packages(self, module_name: str, module: ModuleType) -> None:
+        for modules in self.get_all_packages_modules():
+            modules[module_name] = module
+
+    def get_package_by_name(self, package_name: str) -> VendorPackageModules:
+        return self._package_to_vendor_modules[package_name]
+
+    def get_package_names(self) -> Iterable[str]:
+        return self._package_to_vendor_modules.keys()
+
+    def get_all_packages_modules(self) -> Iterable[dict[str, ModuleType]]:
+        return (vendor_modules.modules for vendor_modules in self._package_to_vendor_modules.values())
+
+    def get_package_name_trees(self) -> set[str]:
+        return self._cached_package_trees
+
+    def calculate_package_trees(self) -> set[str]:
+        return set.union(*(_calculate_package_tree(package) for package in self.get_package_names()))
 
 
 class VendoredSysModules(UserDict[str, ModuleType]):
@@ -36,13 +65,15 @@ class VendoredSysModules(UserDict[str, ModuleType]):
     def __init__(self, original_sys_modules: dict[str, ModuleType]) -> None:
         self.original_sys_modules = original_sys_modules
         self._user_modules: dict[str, ModuleType] = original_sys_modules.copy()
-        self._package_to_vendor_modules: dict[str, VendorPackageModules] = {}
         self._current_installed_package_name: Optional[str] = None
+        self._vendor_packages = VendorPackages()
 
     def add_package(self, package: VendorPackage) -> None:
-        self._package_to_vendor_modules[package.package_name] = VendorPackageModules(
-            vendor_package=package,
-            modules=self._user_modules.copy(),
+        self._vendor_packages.add_package(
+            VendorPackageModules(
+                vendor_package=package,
+                modules=self._user_modules.copy(),
+            ),
         )
         self._update_modules_with_package_tree(package)
 
@@ -50,11 +81,11 @@ class VendoredSysModules(UserDict[str, ModuleType]):
         if self._current_installed_package_name == package_name:
             return
 
-        vendor_modules = self._package_to_vendor_modules[package_name]
+        vendor_modules = self._vendor_packages.get_package_by_name(package_name)
         if self._current_installed_package_name is not None:
             self._switch_original_sys_modules_state(
                 vendor_modules.modules,
-                self._package_to_vendor_modules[package_name].modules,
+                self._vendor_packages.get_package_by_name(self._current_installed_package_name).modules,
             )
 
         self._switch_original_sys_modules_state(vendor_modules.modules, self._user_modules)
@@ -65,7 +96,7 @@ class VendoredSysModules(UserDict[str, ModuleType]):
             return
 
         # TODO(Eyal): Add fallback to latest installed package name ie (if you're in reyk then entered reyk.cli and you exit reyk.cli you should return to reyk)  # noqa: E501, FIX002, TD003
-        vendor_modules = self._package_to_vendor_modules[self._current_installed_package_name]
+        vendor_modules = self._vendor_packages.get_package_by_name(self._current_installed_package_name)
         self._switch_original_sys_modules_state(self._user_modules, vendor_modules.modules)
         self._current_installed_package_name = None
 
@@ -81,23 +112,22 @@ class VendoredSysModules(UserDict[str, ModuleType]):
 
     def __setitem__(self, key: str, value: ModuleType) -> None:
         module_name = value.__name__
-        if is_part_of_stdlib(module_name) or module_name in self._get_vendored_package_trees():
+        if is_part_of_stdlib(module_name) or module_name in self._vendor_packages.get_package_name_trees():
             # Standard libraries should be registered as both package & user modules
             self.original_sys_modules[key] = value
             self._user_modules[key] = value
-            for vendor_modules in self._package_to_vendor_modules.values():
-                vendor_modules.modules[key] = value
+            self._vendor_packages.add_module_to_all_packages(key, value)
             return
 
         dicts_to_update: list[MutableMapping[str, ModuleType]] = [super()]
-        matching_package = get_caller_matching_package(self._package_to_vendor_modules.keys())
+        matching_package = get_caller_matching_package(self._vendor_packages.get_package_names())
         if matching_package == self._current_installed_package_name:
             dicts_to_update.append(self.original_sys_modules)
 
         vendor_prefix = (
             None
             if matching_package is None
-            else self._package_to_vendor_modules[matching_package].vendor_package.vendor_prefix
+            else self._vendor_packages.get_package_by_name(matching_package).vendor_package.vendor_prefix
         )
         # The setitem will be directed to package modules/user modules
         for dict_to_update in dicts_to_update:
@@ -108,13 +138,15 @@ class VendoredSysModules(UserDict[str, ModuleType]):
 
     def __getattribute__(self, name: str) -> object:
         if name == VendoredSysModules.DICT_INTERNAL_DATA_FIELD_NAME:
-            matching_package = get_caller_matching_package(self._package_to_vendor_modules.keys())
+            matching_package = get_caller_matching_package(self._vendor_packages.get_package_names())
             if matching_package is None:
                 return self._user_modules
 
-            # TODO(Eyal): Should we only return the modules if the current active package is the modules?  # noqa: E501, FIX002, TD003
-            # If not - should we even track the current active package?
-            return self._package_to_vendor_modules[matching_package].modules
+            # The package may not necessarily correspond to the currently
+            # installed package (_current_installed_package_name) if the import arrived from
+            # a function which occurred unrelated to the module vendored module initial loading.
+            # (ie an import from within a function which occurs outside of the initial startup imports)
+            return self._vendor_packages.get_package_by_name(matching_package).modules
 
         return super().__getattribute__(name)
 
@@ -126,7 +158,7 @@ class VendoredSysModules(UserDict[str, ModuleType]):
         the 'libs' of 'example_project' ('example_project.libs.another_project') then 'another_project' needs to
         be able to access 'example_project' in its vendored context.
         """
-        for vendored_package_node_name in self._get_package_tree(package.package_name):
+        for vendored_package_node_name in _calculate_package_tree(package.package_name):
             package_mod = self._find_module_from_all_module_dicts(vendored_package_node_name)
             if package_mod is None:
                 continue
@@ -147,26 +179,20 @@ class VendoredSysModules(UserDict[str, ModuleType]):
     def _all_module_dicts(self) -> Iterable[dict[str, ModuleType]]:
         return (
             self._user_modules,
-            *(vendor_modules.modules for vendor_modules in self._package_to_vendor_modules.values()),
+            *self._vendor_packages.get_all_packages_modules(),
         )
 
-    def _get_vendored_package_trees(self) -> set[str]:
-        # TODO(Eyal): Can this be faster/cached?  # noqa: FIX002, TD003
-        return self._get_package_trees(set(self._package_to_vendor_modules.keys()))
 
-    def _get_package_trees(self, packages: set[str]) -> set[str]:
-        return set.union(*(self._get_package_tree(package) for package in packages))
+def _calculate_package_tree(module_name: str) -> set[str]:
+    """
+    Returns all parents and module itself.
 
-    def _get_package_tree(self, module_name: str) -> set[str]:
-        """
-        Returns all parents and module itself.
+    Example:
+        parent_package.child_package.module -> {
+            'parent_package',
+            'parent_package.child_package',
+            'parent_package.child_package.module',
+        }
 
-        Example:
-            parent_package.child_package.module -> {
-                'parent_package',
-                'parent_package.child_package',
-                'parent_package.child_package.module',
-            }
-
-        """
-        return set(itertools.accumulate(module_name.split("."), lambda part1, part2: f"{part1}.{part2}"))
+    """
+    return set(itertools.accumulate(module_name.split("."), lambda part1, part2: f"{part1}.{part2}"))

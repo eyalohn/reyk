@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from reyk.reyk_isolator import get_installed_reyk, uninstall_reyk
+from reyk.isolator import get_installed_reyk, uninstall_reyk
 from tests.blackbox.test_distributions_finder import assert_distribution_names_subset
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 from tests.blackbox.libraries_manager import LibrariesManager
@@ -524,8 +524,8 @@ def test_multiple_isolation_parent_first(
         library_name="isolated_library",
         module_name="module",
         content="""
-from reyk.isolator import isolate_package
-isolate_package()
+from reyk.isolator import isolate_package, get_caller_vendor_package
+isolate_package(get_caller_vendor_package())
 
 def import_my_string() -> str:
     from another_library.module import MY_STRING

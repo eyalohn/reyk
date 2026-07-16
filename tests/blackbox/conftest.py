@@ -5,8 +5,8 @@ from importlib.metadata import Distribution
 from pathlib import Path
 
 import pytest
-from reyk.isolator import isolate_package
-from reyk.reyk_isolator import VendorPackage, uninstall_reyk
+from reyk.isolator import isolate_package, uninstall_reyk
+from reyk.isolator_definition import VendorPackage
 
 from tests.blackbox.test_distributions_finder import find_distributions_from_library, find_distributions_from_project
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager

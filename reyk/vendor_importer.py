@@ -1,3 +1,4 @@
+from typing import cast
 import builtins
 import functools
 import importlib
@@ -10,7 +11,7 @@ from types import ModuleType
 from typing import Optional, Protocol
 
 from reyk.caller_finder import get_caller_matching_package
-from reyk.reyk_isolator import ReykIsolator, VendorPackage, Version
+from reyk.isolator_definition import ReykIsolator, ReykIsolatorFactory, VendorPackage, Version
 from reyk.stdlib_finder import is_part_of_stdlib
 from reyk.vendored_sys_modules import VendoredSysModules
 
@@ -39,8 +40,6 @@ class ImportLibImporter(Protocol):
 
 
 class VendorImporter(ReykIsolator, DistributionFinder):
-    VENDOR_IMPORTER_VERSION = Version(major=1, minor=0, patch=0)
-
     def __init__(
         self,
         original_builtins_import_method: BuiltinsImporter,
@@ -307,9 +306,24 @@ class VendorImporter(ReykIsolator, DistributionFinder):
         self._is_installed = False
 
     @property
-    def version(self) -> Version:
-        return VendorImporter.VENDOR_IMPORTER_VERSION
-
-    @property
     def package_names(self) -> set[str]:
         return set(self._package_name_to_vendor_package.keys())
+
+    @property
+    def factory(self) -> type["VendorImporterFactory"]:
+        return VendorImporterFactory
+
+
+class VendorImporterFactory(ReykIsolatorFactory):
+    VENDOR_IMPORTER_VERSION = Version(major=1, minor=0, patch=0)
+
+    @classmethod
+    def create_isolator(cls) -> ReykIsolator:
+        return VendorImporter(
+            original_builtins_import_method=cast(BuiltinsImporter, builtins.__import__),
+            original_importlib_import_method=importlib.import_module,
+        )
+
+    @classmethod
+    def version(cls) -> Version:
+        return cls.VENDOR_IMPORTER_VERSION

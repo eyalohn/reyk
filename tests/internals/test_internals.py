@@ -7,8 +7,14 @@ from typing import Optional, cast
 import pytest
 
 from reyk.caller_finder import get_caller_frame_outside_reyk, get_caller_matching_package
-from reyk.isolator import create_vendor_importer, isolate_package
-from reyk.reyk_isolator import VendorPackage, get_installed_reyk, uninstall_reyk
+from reyk.isolator import (
+    FACTORY_IMPLEMENTATION,
+    get_installed_reyk,
+    isolate_package,
+    uninstall_reyk,
+    get_caller_vendor_package,
+)
+from reyk.isolator_definition import VendorPackage
 
 
 FAKE_VENDOR_PACKAGE = VendorPackage(
@@ -55,14 +61,23 @@ def test_get_vendor_importer_install_and_uninstall() -> None:
 
 
 def test_get_vendor_importer_install_and_uninstall_with_meta_path_manipulation() -> None:
-    vendor_importer = create_vendor_importer(FAKE_VENDOR_PACKAGE)
-    assert isinstance(vendor_importer, MetaPathFinder)
-    sys.meta_path.append(vendor_importer)
-    vendor_importer.install()
-    assert sys.meta_path.count(vendor_importer) == 1
+    isolator = FACTORY_IMPLEMENTATION.create_isolator()
+    isolator.add_package(vendor_package=FAKE_VENDOR_PACKAGE)
+    assert isinstance(isolator, MetaPathFinder)
+    sys.meta_path.append(isolator)
+    isolator.install()
+    assert sys.meta_path.count(isolator) == 1
 
-    sys.meta_path.remove(vendor_importer)
-    vendor_importer.uninstall()
-    assert vendor_importer not in sys.meta_path
+    sys.meta_path.remove(isolator)
+    isolator.uninstall()
+    assert isolator not in sys.meta_path
 
     assert get_installed_reyk() is None
+
+
+def test_get_caller_vendor_package() -> None:
+    vendor_package = get_caller_vendor_package()
+    assert vendor_package == VendorPackage(
+        package_name="tests.internals",
+        vendor_libs_path=Path(__file__).parent / "libs",
+    )
