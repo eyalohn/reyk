@@ -45,27 +45,6 @@ class VendorPackages:
         return set.union(*(_calculate_package_tree(package) for package in self.get_package_names()))
 
 
-class PackagesVendorContext:
-    def __init__(self) -> None:
-        self._current_packages_context: list[str] = []
-
-    def enter_context(self, package_name: str) -> None:
-        if package_name in self._current_packages_context:
-            self._current_packages_context.remove(package_name)  # Make sure its the top-most package in the list
-        self._current_packages_context.append(package_name)
-
-    def exit_context(self) -> str:
-        """Exits the current package context and returns the removed package name"""
-        return self._current_packages_context.pop()
-
-    def is_empty(self) -> bool:
-        return len(self._current_packages_context) == 0
-
-    @property
-    def package_name_in_context(self) -> str | None:
-        return None if len(self._current_packages_context) == 0 else self._current_packages_context[-1]
-
-
 class VendoredSysModules(UserDict[str, ModuleType]):
     """
     Wrapper for overriding python-direct access to return vendored modules based on
@@ -87,7 +66,7 @@ class VendoredSysModules(UserDict[str, ModuleType]):
         self.original_sys_modules = original_sys_modules
         self._user_modules: dict[str, ModuleType] = original_sys_modules.copy()
         self._vendor_packages = VendorPackages()
-        self._vendor_context = PackagesVendorContext()
+        self._current_package_in_context: str | None = None
 
     def add_package(self, package: VendorPackage) -> None:
         self._vendor_packages.add_package(
@@ -99,31 +78,25 @@ class VendoredSysModules(UserDict[str, ModuleType]):
         self._update_modules_with_package_tree(package)
 
     def install_vendored_sys_modules(self, package_name: str) -> None:
-        if self._vendor_context.package_name_in_context == package_name:
+        if self._current_package_in_context == package_name:
             return
 
         vendor_modules = self._vendor_packages.get_package_by_name(package_name)
-        if self._vendor_context.package_name_in_context is not None:
-            self._switch_original_sys_modules_state(
-                vendor_modules.modules,
-                self._vendor_packages.get_package_by_name(self._vendor_context.package_name_in_context).modules,
-            )
-
-        self._switch_original_sys_modules_state(vendor_modules.modules, self._user_modules)
-        self._vendor_context.enter_context(package_name)
+        previous_modules = (
+            self._user_modules
+            if self._current_package_in_context is None
+            else self._vendor_packages.get_package_by_name(self._current_package_in_context).modules
+        )
+        self._switch_original_sys_modules_state(vendor_modules.modules, previous_modules)
+        self._current_package_in_context = package_name
 
     def remove_vendored_sys_modules(self) -> None:
-        if self._vendor_context.is_empty():
+        if self._current_package_in_context is None:
             return
 
-        removed_context = self._vendor_context.exit_context()
-        modules_to_remove = self._vendor_packages.get_package_by_name(removed_context)
-        new_modules_after_removal = (
-            self._user_modules
-            if self._vendor_context.package_name_in_context is None
-            else self._vendor_packages.get_package_by_name(self._vendor_context.package_name_in_context).modules
-        )
-        self._switch_original_sys_modules_state(new_modules_after_removal, modules_to_remove.modules)
+        modules_to_remove = self._vendor_packages.get_package_by_name(self._current_package_in_context)
+        self._switch_original_sys_modules_state(self._user_modules, modules_to_remove.modules)
+        self._current_package_in_context = None
 
     def _switch_original_sys_modules_state(
         self,
@@ -146,7 +119,7 @@ class VendoredSysModules(UserDict[str, ModuleType]):
 
         dicts_to_update: list[MutableMapping[str, ModuleType]] = [super()]
         matching_package = get_caller_matching_package(self._vendor_packages.get_package_names())
-        if matching_package == self._vendor_context.package_name_in_context:
+        if matching_package == self._current_package_in_context:
             dicts_to_update.append(self.original_sys_modules)
 
         vendor_prefix = (

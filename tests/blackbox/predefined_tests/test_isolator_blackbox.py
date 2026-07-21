@@ -548,11 +548,58 @@ from another_library.module import MY_STRING as EXAMPLE_MY_STRING
 {"" if import_child_string_first else import_my_string_statement}
 """,
     )
+    from example_project import parent_module  # pyright: ignore[reportAttributeAccessIssue]
+
+    assert parent_module.ISOLATED_MY_STRING == "grandchild"
+    assert parent_module.EXAMPLE_MY_STRING == "child"
+
+
+def test_mimic_c_import_imports_isolated_library(
+    files_manager: ExampleProjectFileManager,
+) -> None:
+    files_manager.create_library_module(
+        library_name="isolated_library",
+        module_name=f"{files_manager.libraries_dir_relative_path}.another_library.module",
+        content="MY_STRING = 'grandchild'",
+    )
+    files_manager.create_library_module(
+        library_name="isolated_library",
+        module_name="module",
+        content="""
+import sys
+original_sys_modules = sys.modules.original_sys_modules
+
+from reyk.isolator import isolate_package, get_caller_vendor_package
+isolate_package(get_caller_vendor_package())
+
+from another_library.module import MY_STRING
+ISOLATED_LIBRARY_MODULE = original_sys_modules.get("another_library.module")
+""",
+    )
+
+    files_manager.create_library_module(
+        library_name="another_library",
+        module_name="module",
+        content="MY_STRING = 'child'",
+    )
+    files_manager.create_project_module(
+        module_name="parent_module",
+        content="""
+import sys
+original_sys_modules = sys.modules.original_sys_modules
+
+import isolated_library.module
+ISOLATED_LIBRARY_MODULE = original_sys_modules.get("isolated_library.module")
+
+import another_library.module
+NON_ISOLATED_LIBRARY_MODULE = original_sys_modules.get("another_library.module")
+""",
+    )
     try:
         from example_project import parent_module  # pyright: ignore[reportAttributeAccessIssue]
 
-        assert parent_module.ISOLATED_MY_STRING == "grandchild"
-        assert parent_module.EXAMPLE_MY_STRING == "child"
+        assert parent_module.ISOLATED_LIBRARY_MODULE.ISOLATED_LIBRARY_MODULE.MY_STRING == "grandchild"
+        assert parent_module.NON_ISOLATED_LIBRARY_MODULE.MY_STRING == "child"
     finally:
         reyk = get_installed_reyk()
         if reyk is not None and reyk.package_names == {"isolated_library"}:
