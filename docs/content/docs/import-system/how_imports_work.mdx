@@ -1,0 +1,39 @@
+---
+title: How imports work
+---
+
+# Import Types
+## Absolute
+```import my_package.module```
+
+Imports the module and its accessible via its full name as a variable (i.e., `my_package.module`).
+When importing a module within a package all its parents are imported as well.
+In our example `my_package` is imported before `my_package.module` as a side-effect from importing `my_package.module`.
+
+## Relative
+`from .module import variable` or `from ..module import variable`
+
+Imports one or several variables from a module/package. The import path must be relative to the current module.
+This import mechanism is advantageous when attempting to [vendor](./what_is_vendoring.mdx)
+
+# The `__import__` function
+`__import__` within `builtins` is the implementation of what imports perform.
+Writing any `import` statement whether absolute, relative or includes a 
+`from ... import` statement invokes the function.
+
+# Importlib
+Another option for importing is using `importlib` with `importlib.import_module`.
+```
+importlib.import_module("my_package.module")
+```
+The functions imports the module similar to absolute imports but returns the final module,
+unlike absolute imports.
+
+For example:
+```
+import my_package.module
+
+importlib_module = importlib.import_module("my_package.module")
+# The importlib module is already `my_package.module` and doesn't need to be accessed with a `.module`
+assert importlib_module is my_package.module
+```
