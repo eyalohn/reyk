@@ -10,7 +10,7 @@ from reyk.isolator_definition import VendorPackage
 from reyk.stdlib_finder import is_part_of_stdlib
 
 
-@dataclass(kw_only=True)
+@dataclass
 class VendorPackageModules:
     vendor_package: VendorPackage
     modules: dict[str, ModuleType]

@@ -19,7 +19,7 @@ class Version:
         return f"{self.major}.{self.minor}.{self.patch}"
 
 
-@dataclass(kw_only=True)
+@dataclass
 class VendorPackage:
     package_name: str
     """
