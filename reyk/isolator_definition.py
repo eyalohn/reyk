@@ -25,14 +25,14 @@ class VendorPackage:
     """
     Package to isolate - should be like `reyk` or like `reyk.sub_package`
     """
+    vendor_libs_path: Path
+    """
+    Path to the vendor libs (defined by `vendor_libs_import_path`)
+    """
     vendor_libs_import_path: Optional[str] = None
     """
     The import path for the vendored libraries ie: `reyk.libs` or `libs`.
     The default (if `None`) will be the `{package_name}.libs`.
-    """
-    vendor_libs_path: Path
-    """
-    Path to the vendor libs (defined by `vendor_libs_import_path`)
     """
 
     @property
