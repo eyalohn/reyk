@@ -1,11 +1,11 @@
 {
   "title": "Import System",
   "icon": "Cog",
-  "defaultOpen": true,
+  "defaultOpen": false,
   "pages": [
-    "how_imports_work",
+    "how-imports-work",
     "what_is_vendoring",
-    "partial_module_access",
-    "multiple_overrides"
+    "partial-module-access",
+    "multiple-overrides"
   ]
 }

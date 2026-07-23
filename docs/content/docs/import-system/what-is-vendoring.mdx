@@ -1,11 +1,14 @@
 ---
 title: What is vendoring?
 ---
+
 Vendoring means bundling copies of third-party dependencies inside your project or distribution
 so that your code can use those specific copies instead of relying on separately installed versions.
 
-# How is vendoring different
-## Without Vendoring
+## How is vendoring different
+
+### Without Vendoring
+
 ```
 - my_project
     - src/
@@ -13,7 +16,8 @@ so that your code can use those specific copies instead of relying on separately
 
 Imports from the project to libraries are directed to site-packages directory included in sys.path.
 
-## With Vendoring
+### With Vendoring
+
 ```
 - my_project
     - src/
@@ -25,29 +29,34 @@ Imports from the project to libraries are directed to site-packages directory in
 
 Imports of libraries are directed to `libs`.
 
-# Implementations of Vendoring
+## Implementations of Vendoring
+
 There are many possible ways to implement vendoring, each with their advantages and disadvantages.
 
 We'll cover several possible implementations:
-## Changing our imports
+
+### Changing our imports
+
 The most basic way to use vendored packages (our `libs` directory) is to simply change our imports to include it:
 Instead of importing `import pydantic` we'll use `import my_project.libs.pydantic`.
 
 This in itself sounds simple but has several problems:
+
 1. Requires changing all our imports
 2. Requires changing all the libraries in `libs` imports as well
 3. Imports from a library in `libs` compiled extension modules are likely difficult to modify
 4. Code expecting modules to exist under their original names in sys.modules would need to access via my_project.libs.module_name, which may break assumptions made by libraries.
 5. etc...
 
-We're able to solve some of these problems by creating tools to change the import statements for us 
-(either dynamically via `sys.meta_path` (See more in [Meta Path](./meta_path.mdx)) or literally modifying the code).
+We're able to solve some of these problems by creating tools to change the import statements for us
+(either dynamically via `sys.meta_path` (See more in [Meta Path](./meta-path.mdx)) or literally modifying the code).
 But this would only improve the development process so that we don't require to change the imports ourselves
 and not face the many more problems with this idea.
 
-This option is used by `pip`.
+This option is used by [`pip`](https://github.com/pypa/pip/tree/main/src/pip/_vendor).
 
-## Editing sys.path
+### Editing sys.path
+
 The import process relies on finding modules for import from packages in your `sys.path`.
 If we want to be able to import from a `libs` directory **without** changing our imports the easiest
 way would be to add the `libs` directory to the `sys.path`.
@@ -67,19 +76,22 @@ Of course creating your a process for your code comes with many challenges and p
 
 This is option is recommended for only executing your program but not delivering a library.
 
-## Modifying the `__import__` process
-You can read more about the [builtins import](./builtins_import.mdx) here.
+### Modifying the `__import__` process
+
+You can read more about the [builtins import](./builtins-import.mdx) here.
 
 Basically changing what library `__import__` tries to import depending on where the import came from.
 If the import originates from:
+
 - Your project - it will be redirected to the vendored package within `libs`
 - Outside your project (for example a user of your project as a library) - resolve the import normally
 
 This approach is far from easy because `__import__` is not the only way to access modules.
+
 1. Using `sys.modules` to access modules needs to be available as well
-(which because the library is in `libs` it has a different module name)
+   (which because the library is in `libs` it has a different module name)
 2. Imports can also originate from `importlib.import_module` which does not propagate to `__import__` and
-needs to be overridden as well.
+   needs to be overridden as well.
 3. and many more...
 
 But because we found many of these issues solvable and this method simplest to use we
