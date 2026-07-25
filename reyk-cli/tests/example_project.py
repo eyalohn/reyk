@@ -10,7 +10,10 @@ from reyk_cli.configuration_reader import (
 
 PYPROJECT_TOML_NAME = "pyproject.toml"
 DIST_INFO_SUBSTRING = "dist-info"
-IGNORED_DIRECTORIES_IN_LIBS = {"bin", "images"}  # Directories which aren't packages
+IGNORED_DIRECTORIES_IN_LIBS = {
+    "bin",
+    "images",  # Some packages like tqdm used in our testing use `images` directory to store images
+}  # Directories which aren't packages
 
 PYPROJECT_EXAMPLE: dict[str, Any] = {
     "project": {

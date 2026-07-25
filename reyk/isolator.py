@@ -25,7 +25,7 @@ def isolate_package(vendor_package: VendorPackage) -> None:
         current_reyk_version = FACTORY_IMPLEMENTATION.version()
         if installed_reyk_version.major != current_reyk_version.major:
             raise ValueError(
-                f"Cannot install {vendor_package.package_name=} because the currently installed reyk has "
+                f"Cannot install {vendor_package.package_name=} because the currently installed Reyk has "
                 f"a different major version. "
                 f"(Installed Version: {installed_reyk_version} / (Library Version: {current_reyk_version=}). "
                 "Consider installing reyk with a similar ReykIsolator major."
@@ -36,7 +36,7 @@ def isolate_package(vendor_package: VendorPackage) -> None:
 
 def install_reyk(reyk_isolator: ReykIsolator) -> None:
     if hasattr(builtins, REYK_COMMUNICATION_ATTRIBUTE_NAME):
-        raise ValueError("Cannot install reyk communication module when one already exists")
+        raise ValueError("Cannot install Reyk communication module when one already exists")
 
     reyk_isolator.install()
     setattr(builtins, REYK_COMMUNICATION_ATTRIBUTE_NAME, reyk_isolator)

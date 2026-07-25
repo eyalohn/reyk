@@ -2,21 +2,12 @@ from typing import Optional
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
+from packaging.version import Version
 
 # Module for facilitating communication between Reyk versions.
 
 
 DEFAULT_VENDOR_LIBS_IMPORT_PATH = "libs"
-
-
-@dataclass(frozen=True, order=True)
-class Version:
-    major: int
-    minor: int
-    patch: int
-
-    def __str__(self) -> str:
-        return f"{self.major}.{self.minor}.{self.patch}"
 
 
 @dataclass
@@ -29,18 +20,18 @@ class VendorPackage:
     """
     Path to the vendor libs (defined by `vendor_libs_import_path`)
     """
-    vendor_libs_import_path: Optional[str] = None
+    vendor_libs_import_name: Optional[str] = None
     """
-    The import path for the vendored libraries ie: `reyk.libs` or `libs`.
+    The import name for the vendored libraries ie: `reyk.libs` or `libs`.
     The default (if `None`) will be the `{package_name}.libs`.
     """
 
     @property
     def vendor_prefix(self) -> str:
-        if self.vendor_libs_import_path is None:
+        if self.vendor_libs_import_name is None:
             return f"{self.package_name}.{DEFAULT_VENDOR_LIBS_IMPORT_PATH}"
 
-        return self.vendor_libs_import_path
+        return self.vendor_libs_import_name
 
 
 class ReykIsolator(ABC):

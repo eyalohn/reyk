@@ -10,8 +10,9 @@ from importlib.metadata import Distribution, DistributionFinder, MetadataPathFin
 from types import ModuleType
 from typing import Optional, Protocol
 
+from packaging.version import Version
 from reyk.caller_finder import get_caller_matching_package
-from reyk.isolator_definition import ReykIsolator, ReykIsolatorFactory, VendorPackage, Version
+from reyk.isolator_definition import ReykIsolator, ReykIsolatorFactory, VendorPackage
 from reyk.stdlib_finder import is_part_of_stdlib
 from reyk.vendored_sys_modules import VendoredSysModules
 
@@ -315,7 +316,7 @@ class VendorImporter(ReykIsolator, DistributionFinder):
 
 
 class VendorImporterFactory(ReykIsolatorFactory):
-    VENDOR_IMPORTER_VERSION = Version(major=1, minor=0, patch=0)
+    VENDOR_IMPORTER_VERSION = Version.from_parts(release=(1, 0, 0))
 
     @classmethod
     def create_isolator(cls) -> ReykIsolator:
