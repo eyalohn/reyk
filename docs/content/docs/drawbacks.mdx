@@ -1,0 +1,80 @@
+---
+title: Drawbacks of using Reyk
+icon: ThumbsDown
+---
+
+# Development with Reyk
+
+When developing a library that uses Reyk, it is recommended to work in a regular virtual environment
+without a `libs`/`vendor` directory. This makes development much simpler and avoids the need to
+regenerate vendored dependencies after every change.
+
+The downside is that your development environment does not exactly match the final package that users
+will install. For this reason, it is recommended to test the fully vendored package before publishing it.
+
+# Creating the `libs`/`vendor` Directory
+
+Before publishing your library, you need to generate the `libs`/`vendor` directory containing the
+vendored dependencies. Reyk provides the `reyk-cli sync` command to automate this process.
+
+The generated directory depends on the target environment. If your dependencies include compiled
+extensions, the vendored files must be built for the correct operating system, architecture, and Python
+version. If you publish wheels for multiple platforms or Python versions, each one needs its own matching
+`libs`/`vendor` directory.
+
+# Public API
+
+Vendored dependencies should be treated as an implementation detail and should not be exposed as part of
+your library's public API.
+
+Although the vendored dependency may contain exactly the same code and version as the user's installed
+dependency, Python treats them as different modules because they are imported under different names.
+Because of this, the types they define are also different.
+
+For example, suppose your library vendors `pydantic`:
+
+```python
+# Inside your library
+from pydantic import BaseModel
+
+class Model(BaseModel):
+    ...
+```
+
+When your library is imported, Reyk redirects this import to the vendored copy of `pydantic`.
+
+A user of your library may also have their own installation of `pydantic`:
+
+```python
+from your_library import Model
+from pydantic import BaseModel
+
+assert issubclass(Model, BaseModel) is False
+assert isinstance(Model(), BaseModel) is False
+```
+
+Even though both `BaseModel` classes come from the same version of `pydantic`, they were imported from
+different modules, so Python considers them different types.
+
+As a general rule, avoid exposing types from vendored dependencies in your public API. Instead, convert
+them into your own types or design your API so that users do not need to interact directly with vendored
+libraries.
+
+# Concurrent Imports with `sys.modules` Access
+
+Some imports performed by CPython's import implementation (see `Python/import.c`) import a module and
+then retrieve it directly from `sys.modules` using its original module name.
+
+Normally, Reyk redirects Python-level imports and `sys.modules` access so that each piece of code
+receives the correct vendored or non-vendored module. However, CPython's C implementation bypasses these
+Python-level overrides.
+
+To support this behavior, Reyk keeps an entry in `sys.modules` under the original module name (without
+the vendor prefix). This entry always points to the most recently imported version of that module.
+
+If vendored and non-vendored versions of the same library are imported at the same time, the entry under
+the original name may switch between them. As a result, code that retrieves modules directly from
+`sys.modules` at the C level may receive a different version than expected.
+
+This limitation does not affect normal Python code. Regular `import` statements and Python-level access
+to `sys.modules` continue to resolve to the correct vendored or non-vendored module.
