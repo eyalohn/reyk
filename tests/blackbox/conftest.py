@@ -1,6 +1,7 @@
+from contextlib import contextmanager
 import functools
 import sys
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from importlib.metadata import Distribution
 from pathlib import Path
 from typing import cast
@@ -15,23 +16,31 @@ from tests.blackbox.example_project_file_manager import ExampleProjectFileManage
 from tests.blackbox.libraries_manager import LibrariesManager
 from tests.blackbox.project_paths import (
     EXAMPLE_PROJECT_LIBRARIES_DIRECTORY_RELATIVE_PATH,
-    EXAMPLE_PROJECT_PATH,
+    EXAMPLE_PROJECT_NAME,
     TEST_LIBRARIES_DIRECTORY_PATH,
 )
 
 
-@pytest.fixture(scope="package", autouse=True)
-def install_project_in_path() -> Iterable[None]:
+def _create_files_manager_in_tmp(tmp_path: Path) -> ExampleProjectFileManager:
+    project_path = tmp_path / EXAMPLE_PROJECT_NAME
+    return ExampleProjectFileManager(
+        project_path=project_path,
+        libraries_dir_relative_path=EXAMPLE_PROJECT_LIBRARIES_DIRECTORY_RELATIVE_PATH,
+    )
+
+
+@contextmanager
+def _with_project_in_sys_path_context(project_path: Path) -> Iterator[None]:
+    project_path_parent = str(project_path.parent)
     # Tests will be able to import as if in the example project
-    project_path_parent = str(EXAMPLE_PROJECT_PATH.parent)
     sys.path.append(project_path_parent)
     yield
     sys.path.remove(project_path_parent)
 
 
-@pytest.fixture(scope="package", autouse=True)
-def setup_vendor_importer() -> Iterable[None]:
-    isolate_package(EXAMPLE_PROJECT_PATH)
+@contextmanager
+def _isolate_project_in_context(project_path: Path) -> Iterator[None]:
+    isolate_package(project_path)
     yield
     vendor_importer = get_installed_vendor_importer()
     assert vendor_importer is not None
@@ -39,15 +48,13 @@ def setup_vendor_importer() -> Iterable[None]:
 
 
 @pytest.fixture
-def files_manager() -> Iterable[ExampleProjectFileManager]:
-    files_manager = ExampleProjectFileManager(
-        project_path=EXAMPLE_PROJECT_PATH,
-        libraries_dir_relative_path=EXAMPLE_PROJECT_LIBRARIES_DIRECTORY_RELATIVE_PATH,
-    )
-    try:
+def files_manager(tmp_path: Path) -> Iterable[ExampleProjectFileManager]:
+    files_manager = _create_files_manager_in_tmp(tmp_path)
+    with (
+        _with_project_in_sys_path_context(files_manager.project_path),
+        _isolate_project_in_context(files_manager.project_path),
+    ):
         yield files_manager
-    finally:
-        files_manager.cleanup_files()
 
 
 @pytest.fixture
@@ -70,12 +77,3 @@ def distributions_finder(
     files_manager: ExampleProjectFileManager,
 ) -> Callable[[], list[Distribution]]:
     return functools.partial(request.param, files_manager)
-
-
-@pytest.fixture(autouse=True)
-def clear_sys_imported_modules_cache() -> Iterable[None]:
-    vendor_sys_modules = sys.modules
-    assert isinstance(vendor_sys_modules, VendoredSysModules)
-    snapshot = vendor_sys_modules.take_snapshot()
-    yield
-    vendor_sys_modules.restore_snapshot(snapshot)
