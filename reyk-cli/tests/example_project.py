@@ -10,7 +10,7 @@ from reyk_cli.configuration_reader import (
 
 PYPROJECT_TOML_NAME = "pyproject.toml"
 DIST_INFO_SUBSTRING = "dist-info"
-BINARIES_DIRECTORY_NAME = "bin"
+IGNORED_DIRECTORIES_IN_LIBS = {"bin"}  # Directories which aren't packages
 
 PYPROJECT_EXAMPLE: dict[str, Any] = {
     "project": {
@@ -58,7 +58,7 @@ class ExampleProject:
             for library_path in (self._project_path / self._configuration.libraries_path).iterdir()
             if (
                 library_path.is_dir()
-                and library_path.name != BINARIES_DIRECTORY_NAME
+                and library_path.name not in IGNORED_DIRECTORIES_IN_LIBS
                 and DIST_INFO_SUBSTRING not in library_path.name
             )
         }

@@ -4,12 +4,10 @@ import sys
 from collections.abc import Callable, Iterable, Iterator
 from importlib.metadata import Distribution
 from pathlib import Path
-from typing import cast
 
 import pytest
-from reyk.isolator import isolate_package
-from reyk.vendored_sys_modules import VendoredSysModules
-from reyk.vendor_importer import get_installed_vendor_importer
+from reyk.isolator import isolate_package, uninstall_reyk
+from reyk.isolator_definition import DEFAULT_VENDOR_LIBS_IMPORT_PATH, VendorPackage
 
 from tests.blackbox.test_distributions_finder import find_distributions_from_library, find_distributions_from_project
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
@@ -40,11 +38,14 @@ def _with_project_in_sys_path_context(project_path: Path) -> Iterator[None]:
 
 @contextmanager
 def _isolate_project_in_context(project_path: Path) -> Iterator[None]:
-    isolate_package(project_path)
+    isolate_package(
+        VendorPackage(
+            package_name=EXAMPLE_PROJECT_NAME,
+            vendor_libs_path=project_path / DEFAULT_VENDOR_LIBS_IMPORT_PATH,
+        ),
+    )
     yield
-    vendor_importer = get_installed_vendor_importer()
-    assert vendor_importer is not None
-    vendor_importer.uninstall()
+    uninstall_reyk()
 
 
 @pytest.fixture
@@ -77,3 +78,11 @@ def distributions_finder(
     files_manager: ExampleProjectFileManager,
 ) -> Callable[[], list[Distribution]]:
     return functools.partial(request.param, files_manager)
+
+
+@pytest.fixture(autouse=True)
+def clear_sys_imported_modules_cache() -> Iterable[None]:
+    vendor_sys_modules = sys.modules.copy()
+    yield
+    sys.modules.clear()
+    sys.modules.update(vendor_sys_modules)

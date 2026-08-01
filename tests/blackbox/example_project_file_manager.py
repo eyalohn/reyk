@@ -1,11 +1,10 @@
 from pathlib import Path
-import shutil
 
 
 class ExampleProjectFileManager:
     def __init__(self, project_path: Path, libraries_dir_relative_path: Path) -> None:
         self.project_path = project_path
-        self._libraries_dir_relative_path = libraries_dir_relative_path
+        self.libraries_dir_relative_path = libraries_dir_relative_path
 
     def create_library_module(
         self,
@@ -26,7 +25,7 @@ class ExampleProjectFileManager:
         content: str,
     ) -> Path:
         return self.create_project_file(
-            file_name=str(self._libraries_dir_relative_path / library_name / file_name),
+            file_name=str(self.libraries_dir_relative_path / library_name / file_name),
             content=content,
         )
 
@@ -35,7 +34,7 @@ class ExampleProjectFileManager:
         library_name: str,
     ) -> Path:
         return self.create_project_file(
-            file_name=str(self._libraries_dir_relative_path / f"{library_name}.dist-info" / "METADATA"),
+            file_name=str(self.libraries_dir_relative_path / f"{library_name}.dist-info" / "METADATA"),
             content=f"Metadata-Version: 2.4\nName: {library_name}",
         )
 
