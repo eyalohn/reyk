@@ -5,9 +5,8 @@ from importlib.metadata import Distribution
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 
 DEFINE_DISTRIBUTIONS_STRING = """
-from reyk.vendor_importer import get_installed_vendor_importer
-vendor_importer = get_installed_vendor_importer()
-DISTRIBUTIONS = list(vendor_importer.find_distributions())
+import importlib.metadata
+DISTRIBUTIONS = list(importlib.metadata.distributions())
 """
 
 

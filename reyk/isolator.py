@@ -1,46 +1,64 @@
 import builtins
-import importlib
-import logging
-from pathlib import Path
 from typing import Optional, cast
 
+from reyk.isolator_definition import DEFAULT_VENDOR_LIBS_IMPORT_PATH, ReykIsolator, ReykIsolatorFactory, VendorPackage
 from reyk.caller_finder import get_caller_frame_outside_reyk
-from reyk.vendor_importer import BuiltinsImporter, VendorImporter
+from reyk.vendor_importer import VendorImporterFactory
 
-LOGGER = logging.getLogger(__name__)
+REYK_COMMUNICATION_ATTRIBUTE_NAME = "_reyk_communication"
+"""
+This attribute is set in `builtins` to facilitate 'communication' between reyk instances.
+We intentionally don't use the `__import__` override to not depend on the reyk
+implementation (which might in the future not depend on overriding `__import__`).
+"""
+
+FACTORY_IMPLEMENTATION: type[ReykIsolatorFactory] = VendorImporterFactory
 
 
-def isolate_package(package_path: Optional[Path] = None, vendored_libs_directory_import_path: str = "libs") -> None:
-    vendor_importer = create_vendor_importer(package_path, vendored_libs_directory_import_path)
-    LOGGER.debug(f"Isolating library: {vendor_importer.package_name} ({vendored_libs_directory_import_path=})")
-    vendor_importer.install()
+def isolate_package(vendor_package: VendorPackage) -> None:
+    reyk = get_installed_reyk()
+    if reyk is None:
+        reyk = FACTORY_IMPLEMENTATION.create_isolator()
+        install_reyk(reyk)
+    else:
+        installed_reyk_version = reyk.factory.version()
+        current_reyk_version = FACTORY_IMPLEMENTATION.version()
+        if installed_reyk_version.major != current_reyk_version.major:
+            raise ValueError(
+                f"Cannot install {vendor_package.package_name=} because the currently installed Reyk has "
+                f"a different major version. "
+                f"(Installed Version: {installed_reyk_version} / (Library Version: {current_reyk_version=}). "
+                "Consider installing reyk with a similar ReykIsolator major."
+            )
+
+    reyk.add_package(vendor_package=vendor_package)
 
 
-def create_vendor_importer(
-    package_path: Optional[Path] = None,
-    vendored_libs_directory_import_path: str = "libs",
-) -> VendorImporter:
-    """
-    Isolates a package dependencies - everything imported from the specified package_path
-    will prefer to import libraries inside the specified vendored_libs_directory_import_path
-    instead of the default PYTHONPATH/site-packages.
-    The package_path can be unspecified/None to default to the caller's parent package.
-    vendored_libs_directory_import_path should be the path to import the dependencies
-    from the package.
-    For example if the dependencies are in 'libs' it should be 'libs' as well as we need to perform:
-    `import libs` but if it's a subdirectory like 'my/libs' it should be 'my.libs' for
-    `import my.libs`.
-    """
-    if package_path is None:
-        package_path = get_caller_frame_outside_reyk().filename.parent
+def install_reyk(reyk_isolator: ReykIsolator) -> None:
+    if hasattr(builtins, REYK_COMMUNICATION_ATTRIBUTE_NAME):
+        raise ValueError("Cannot install Reyk communication module when one already exists")
 
-    package_name = package_path.name
-    vendored_libs_path = package_path / vendored_libs_directory_import_path
-    return VendorImporter(
-        package_name,
-        vendored_libs_directory_import_path,
-        vendored_libs_path,
-        # Cast as for some reason the definition of __import__ thinks fromlist is not nullable
-        cast(BuiltinsImporter, builtins.__import__),
-        importlib.import_module,
+    reyk_isolator.install()
+    setattr(builtins, REYK_COMMUNICATION_ATTRIBUTE_NAME, reyk_isolator)
+
+
+def uninstall_reyk() -> None:
+    communication_module = get_installed_reyk()
+    if communication_module is None:
+        raise ValueError(f"No communication module installed {communication_module=}")
+
+    communication_module.uninstall()
+    delattr(builtins, REYK_COMMUNICATION_ATTRIBUTE_NAME)
+
+
+def get_installed_reyk() -> Optional[ReykIsolator]:
+    return cast(Optional[ReykIsolator], getattr(builtins, REYK_COMMUNICATION_ATTRIBUTE_NAME, None))
+
+
+def get_caller_vendor_package() -> VendorPackage:
+    caller = get_caller_frame_outside_reyk()
+    package, _, _ = caller.module_name.rpartition(".")
+    return VendorPackage(
+        package_name=package,
+        vendor_libs_path=caller.filename.parent / DEFAULT_VENDOR_LIBS_IMPORT_PATH,
     )

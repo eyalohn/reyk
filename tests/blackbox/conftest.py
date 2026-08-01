@@ -3,19 +3,19 @@ import sys
 from collections.abc import Callable, Iterable
 from importlib.metadata import Distribution
 from pathlib import Path
-from typing import cast
 
 import pytest
-from reyk.isolator import isolate_package
-from reyk.vendored_sys_modules import VendoredSysModules
-from reyk.vendor_importer import get_installed_vendor_importer
+from reyk.isolator import isolate_package, uninstall_reyk
+from reyk.isolator_definition import VendorPackage
 
 from tests.blackbox.test_distributions_finder import find_distributions_from_library, find_distributions_from_project
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 from tests.blackbox.libraries_manager import LibrariesManager
 from tests.blackbox.project_paths import (
     EXAMPLE_PROJECT_LIBRARIES_DIRECTORY_RELATIVE_PATH,
+    EXAMPLE_PROJECT_NAME,
     EXAMPLE_PROJECT_PATH,
+    EXAMPLE_PROJECT_LIBRARIES_PATH,
     TEST_LIBRARIES_DIRECTORY_PATH,
 )
 
@@ -29,13 +29,11 @@ def install_project_in_path() -> Iterable[None]:
     sys.path.remove(project_path_parent)
 
 
-@pytest.fixture(scope="package", autouse=True)
+@pytest.fixture(autouse=True)
 def setup_vendor_importer() -> Iterable[None]:
-    isolate_package(EXAMPLE_PROJECT_PATH)
+    isolate_package(VendorPackage(package_name=EXAMPLE_PROJECT_NAME, vendor_libs_path=EXAMPLE_PROJECT_LIBRARIES_PATH))
     yield
-    vendor_importer = get_installed_vendor_importer()
-    assert vendor_importer is not None
-    vendor_importer.uninstall()
+    uninstall_reyk()
 
 
 @pytest.fixture
@@ -74,8 +72,7 @@ def distributions_finder(
 
 @pytest.fixture(autouse=True)
 def clear_sys_imported_modules_cache() -> Iterable[None]:
-    vendor_sys_modules = sys.modules
-    assert isinstance(vendor_sys_modules, VendoredSysModules)
-    snapshot = vendor_sys_modules.take_snapshot()
+    vendor_sys_modules = sys.modules.copy()
     yield
-    vendor_sys_modules.restore_snapshot(snapshot)
+    sys.modules.clear()
+    sys.modules.update(vendor_sys_modules)
