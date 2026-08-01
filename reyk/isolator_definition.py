@@ -1,10 +1,13 @@
+"""
+Module for facilitating communication between Reyk versions.
+This module should aim to stay relatively unchanged to not break the protocol
+between versions.
+"""
 from typing import Optional
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 from packaging.version import Version
-
-# Module for facilitating communication between Reyk versions.
 
 
 DEFAULT_VENDOR_LIBS_IMPORT_PATH = "libs"

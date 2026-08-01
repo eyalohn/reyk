@@ -17,13 +17,15 @@ class VendorPackageModules:
 
 
 class VendorPackages:
+    """Stores vendor modules mappings by packages and facilitates utilities for changing and accessing the mapping."""
+
     def __init__(self) -> None:
         self._package_to_vendor_modules: dict[str, VendorPackageModules] = {}
         self._cached_package_trees: set[str] = set()
 
     def add_package(self, package_modules: VendorPackageModules) -> None:
         self._package_to_vendor_modules[package_modules.vendor_package.package_name] = package_modules
-        self._cached_package_trees = self.calculate_package_trees()
+        self._cached_package_trees = self._calculate_package_trees()
 
     def add_module_to_all_packages(self, module_name: str, module: ModuleType) -> None:
         for modules in self.get_all_packages_modules():
@@ -41,7 +43,11 @@ class VendorPackages:
     def get_package_name_trees(self) -> set[str]:
         return self._cached_package_trees
 
-    def calculate_package_trees(self) -> set[str]:
+    def _calculate_package_trees(self) -> set[str]:
+        """
+        Calculates the package tree for mapped packages.
+        See `_calculate_package_tree` for more info.
+        """
         return set.union(*(_calculate_package_tree(package) for package in self.get_package_names()))
 
 
@@ -67,6 +73,12 @@ class VendoredSysModules(UserDict[str, ModuleType]):
         self._user_modules: dict[str, ModuleType] = original_sys_modules.copy()
         self._vendor_packages = VendorPackages()
         self._current_package_in_context: str | None = None
+        """
+        The context is changed by the `VendorImporter` to manipulate whether access to `sys.modules`
+        should include vendored packages already imported within an isolated package.
+        The context is `None` when these modules shouldn't be included and its the isolated package name
+        when they should.
+        """
 
     def add_package(self, package: VendorPackage) -> None:
         self._vendor_packages.add_package(
