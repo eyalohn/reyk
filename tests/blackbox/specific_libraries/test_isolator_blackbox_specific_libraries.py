@@ -10,26 +10,16 @@ import pytest
 
 from tests.blackbox.test_distributions_finder import assert_distribution_names_subset
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
-from tests.blackbox.project_paths import (
-    EXAMPLE_PROJECT_LIBRARIES_PATH,
-    LOCKED_FILES_PENDING_DELETION_PATH,
-    SPECIFIC_LIBRARIES_INSTALLATION_PATH,
-)
+from tests.blackbox.project_paths import SPECIFIC_LIBRARIES_INSTALLATION_PATH
 
 
-@pytest.fixture(autouse=True, scope="module")
-def install_test_libs() -> Iterable[None]:
-    if LOCKED_FILES_PENDING_DELETION_PATH.exists():
-        shutil.rmtree(LOCKED_FILES_PENDING_DELETION_PATH, ignore_errors=True)
-
-    shutil.copytree(SPECIFIC_LIBRARIES_INSTALLATION_PATH, EXAMPLE_PROJECT_LIBRARIES_PATH, dirs_exist_ok=True)
-    yield
-    shutil.rmtree(EXAMPLE_PROJECT_LIBRARIES_PATH, ignore_errors=True)
-    # If there are any remaining files in the directory because they're in use
-    if EXAMPLE_PROJECT_LIBRARIES_PATH.exists():
-        shutil.move(EXAMPLE_PROJECT_LIBRARIES_PATH, LOCKED_FILES_PENDING_DELETION_PATH)
-
-    EXAMPLE_PROJECT_LIBRARIES_PATH.mkdir(parents=True, exist_ok=True)
+@pytest.fixture(autouse=True)
+def install_test_libs(files_manager: ExampleProjectFileManager) -> None:
+    shutil.copytree(
+        SPECIFIC_LIBRARIES_INSTALLATION_PATH,
+        files_manager.project_path / files_manager.libraries_dir_relative_path,
+        dirs_exist_ok=True,
+    )
 
 
 @pytest.mark.parametrize(

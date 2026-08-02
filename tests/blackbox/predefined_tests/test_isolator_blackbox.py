@@ -15,7 +15,6 @@ from tests.blackbox.predefined_tests.variable_access_statement_generator import 
     ALL_IMPORT_TECHNIQUES_BUT_RELATIVE,
     generate_variable_access_statement_params,
 )
-from tests.blackbox.project_paths import EXAMPLE_PROJECT_LIBRARIES_PATH
 
 # Terminology:
 # Project - Isolated project that uses Reyk

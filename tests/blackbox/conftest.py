@@ -15,7 +15,7 @@ from tests.blackbox.libraries_manager import LibrariesManager
 from tests.blackbox.project_paths import (
     EXAMPLE_PROJECT_LIBRARIES_DIRECTORY_RELATIVE_PATH,
     EXAMPLE_PROJECT_NAME,
-    TEST_LIBRARIES_DIRECTORY_PATH,
+    TEST_LIBRARIES_DIRECTORY_NAME,
 )
 
 
@@ -59,12 +59,11 @@ def files_manager(tmp_path: Path) -> Iterable[ExampleProjectFileManager]:
 
 
 @pytest.fixture
-def libraries_manager() -> Iterable[LibrariesManager]:
-    libraries_manager = LibrariesManager(TEST_LIBRARIES_DIRECTORY_PATH)
+def libraries_manager(tmp_path: Path) -> Iterable[LibrariesManager]:
+    libraries_manager = LibrariesManager(tmp_path / TEST_LIBRARIES_DIRECTORY_NAME)
     libraries_manager.install_libraries_in_path()
     yield libraries_manager
     libraries_manager.remove_libraries_from_path()
-    libraries_manager.cleanup_libraries_dir()
 
 
 @pytest.fixture(
