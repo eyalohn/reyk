@@ -1,17 +1,22 @@
 [project]
 name = "reyk-cli"
-version = "0.0.1"
+dynamic = ["version"]
 description = "Manage isolated environment dependencies."
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = ["typer>=0.20.0", "tomli>=2.4.0; python_version < '3.11'"]
+license = 'MIT'
+license-files = ['LICENSE']
 
 [dependency-groups]
 dev = ["pytest>=8.4.2", "tomli-w>=1.2.0"]
 
 [build-system]
-requires = ["uv_build>=0.8.3,<0.9.0"]
-build-backend = "uv_build"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/reyk_cli/version.py"
 
 [project.scripts]
 reyk-cli = "reyk_cli.cli:app"

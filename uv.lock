@@ -936,7 +936,6 @@ testing-extra = [{ name = "pytest-memray", marker = "platform_python_implementat
 
 [[package]]
 name = "reyk-cli"
-version = "0.0.1"
 source = { editable = "reyk-cli" }
 dependencies = [
     { name = "tomli", marker = "python_full_version < '3.11'" },
