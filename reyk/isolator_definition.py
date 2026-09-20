@@ -22,7 +22,7 @@ class VendorPackage:
     """
     vendor_libs_path: Path
     """
-    Path to the vendor libs (defined by `vendor_libs_import_path`)
+    Path to the vendor libs directory (importable by `vendor_libs_import_name`)
     """
     vendor_libs_import_name: Optional[str] = None
     """
