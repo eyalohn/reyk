@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated, cast
+from typing import Annotated, Optional, cast
 
 import typer
 
@@ -29,7 +29,7 @@ def version_callback(*, value: bool) -> None:
 def main(
     ctx: typer.Context,
     version: Annotated[  # noqa: ARG001, value used in callback
-        bool | None,
+        Optional[bool],
         typer.Option(
             "--version",
             help="Display the reyk-cli version",
