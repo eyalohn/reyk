@@ -1,10 +1,12 @@
 # Reyk
 
-[![Tests](https://github.com/eyalohn/reyk/actions/workflows/ci.yml/badge.svg)](https://github.com/eyalohn/reyk/actions/workflows/ci.yml)
-[![Coverage](https://coverage-badge.samuelcolvin.workers.dev/eyalohn/reyk.svg)](https://coverage-badge.samuelcolvin.workers.dev/redirect/eyalohn/reyk)
-[![Latest Version](https://img.shields.io/pypi/v/reyk.svg)](https://pypi.python.org/pypi/reyk/)
-[![Python Versions](https://img.shields.io/pypi/pyversions/reyk.svg)](https://pypi.python.org/pypi/reyk/)
-[![llms.txt](https://img.shields.io/badge/llms.txt-green)](https://reyk.dev/llms-full.txt)
+[![GitHub Stars](https://shieldcn.dev/github/eyalohn/reyk/stars.svg?variant=secondary&size=xs)](https://github.com/eyalohn/reyk)
+[![Latest Version](https://shieldcn.dev/pypi/v/reyk.svg?variant=secondary&size=xs)](https://pypi.python.org/pypi/reyk/)
+![Python Version](https://shieldcn.dev/pypi/python/reyk.svg?variant=secondary&size=xs)
+[![CI](https://shieldcn.dev/github/eyalohn/reyk/ci.svg?variant=secondary&size=xs)](https://github.com/eyalohn/reyk/actions)
+[![Coverage](https://shieldcn.dev/codecov/github/eyalohn/reyk.svg?variant=secondary&size=xs)](https://app.codecov.io/gh/eyalohn/reyk)
+![License](https://shieldcn.dev/github/eyalohn/reyk/license.svg?variant=secondary&size=xs)
+[![llms.txt](https://shieldcn.dev/badge/llms.txt.svg?variant=secondary&size=xs&logo=ri%3AFiFileText)](https://reyk.dev/llms-full.txt)
 
 Run conflicting Python dependencies in one process — with vendored isolation.
 
