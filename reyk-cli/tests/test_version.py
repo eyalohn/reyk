@@ -1,5 +1,4 @@
 from packaging.version import parse as parse_version
-
 from reyk_cli.version import VERSION
 
 
