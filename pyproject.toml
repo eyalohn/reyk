@@ -117,7 +117,7 @@ skip = ".git,env*,uv.lock,**/package-lock.json,./tests/blackbox/specific_librari
 ignore-words-list = ["reyk"]
 
 [tool.coverage.run]
-source = ["reyk", "reyk-cli/src"]
+source_pkgs = ["reyk", "reyk_cli"]
 relative_files = true
 branch = true
 data_file = "coverage/.coverage"
