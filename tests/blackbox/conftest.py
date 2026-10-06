@@ -21,6 +21,9 @@ from tests.blackbox.project_paths import (
 
 def _create_files_manager_in_tmp(tmp_path: Path) -> ExampleProjectFileManager:
     project_path = tmp_path / EXAMPLE_PROJECT_NAME
+    project_path.mkdir(parents=True, exist_ok=True)
+    libraries_dir = project_path / EXAMPLE_PROJECT_LIBRARIES_DIRECTORY_RELATIVE_PATH
+    libraries_dir.mkdir(parents=True, exist_ok=True)
     return ExampleProjectFileManager(
         project_path=project_path,
         libraries_dir_relative_path=EXAMPLE_PROJECT_LIBRARIES_DIRECTORY_RELATIVE_PATH,
@@ -41,6 +44,7 @@ def _isolate_project_in_context(project_path: Path) -> Iterator[None]:
     isolate_package(
         VendorPackage(
             package_name=EXAMPLE_PROJECT_NAME,
+            package_directory=project_path,
             vendor_libs_path=project_path / DEFAULT_VENDOR_LIBS_IMPORT_PATH,
         ),
     )

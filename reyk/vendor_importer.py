@@ -11,9 +11,10 @@ from types import ModuleType
 from typing import Optional, Protocol
 
 from packaging.version import Version
-from reyk.caller_finder import get_caller_matching_package
+from reyk.caller_finder import get_caller_matching_package_from_store
 from reyk.isolator_definition import ReykIsolator, ReykIsolatorFactory, VendorPackage
 from reyk.stdlib_finder import is_part_of_stdlib
+from reyk.vendor_packages_store import VendorPackagesStore
 from reyk.vendored_sys_modules import VendoredSysModules
 
 LOGGER = logging.getLogger(__name__)
@@ -49,14 +50,11 @@ class VendorImporter(ReykIsolator, DistributionFinder):
         self._is_installed = False
         self._original_builtins_import_method = original_builtins_import_method
         self._original_importlib_import_method = original_importlib_import_method
-        self._package_name_to_vendor_package: dict[str, VendorPackage] = {}
-        self._sys_modules_wrapper = VendoredSysModules(sys.modules)
+        self._package_store = VendorPackagesStore()
+        self._sys_modules_wrapper = VendoredSysModules(sys.modules, self._package_store)
 
     def add_package(self, *, vendor_package: VendorPackage) -> None:
-        if vendor_package.package_name in self._package_name_to_vendor_package:
-            raise ValueError(f"{vendor_package.package_name} is already vendored")
-        self._package_name_to_vendor_package[vendor_package.package_name] = vendor_package
-        self._sys_modules_wrapper.add_package(vendor_package)
+        self._sys_modules_wrapper.add_package_to_store(vendor_package)
 
     def builtins_import_override(
         self,
@@ -233,15 +231,16 @@ class VendorImporter(ReykIsolator, DistributionFinder):
             LOGGER.debug(f"Skipping vendor import attempt for {name} because the same name exists in stdlib")
             return None
 
-        if name in self._package_name_to_vendor_package:
-            LOGGER.debug(f"Cannot re-import the library: {self._package_name_to_vendor_package}")
+        if self._package_store.is_package_in_store(name):
+            LOGGER.debug(f"Cannot re-import the library: {name=}")
             return None
 
-        matching_vendor_package = self._get_caller_matching_vendor_package()
-        if matching_vendor_package is None:
+        matching_vendor_package_modules = get_caller_matching_package_from_store(self._package_store)
+        if matching_vendor_package_modules is None:
             LOGGER.debug("Cannot import because it's not part of library")
             return None
 
+        matching_vendor_package = matching_vendor_package_modules.vendor_package
         if name.startswith(matching_vendor_package.vendor_prefix):
             LOGGER.debug(
                 "The attempted import is already for a vendored package therefore there's "
@@ -251,13 +250,6 @@ class VendorImporter(ReykIsolator, DistributionFinder):
 
         return matching_vendor_package
 
-    def _get_caller_matching_vendor_package(self) -> Optional[VendorPackage]:
-        matching_package_name = get_caller_matching_package(self._package_name_to_vendor_package.keys())
-        if matching_package_name is None:
-            return None
-
-        return self._package_name_to_vendor_package[matching_package_name]
-
     def find_distributions(
         self,
         context: Optional[DistributionFinder.Context] = None,
@@ -266,12 +258,12 @@ class VendorImporter(ReykIsolator, DistributionFinder):
             context = DistributionFinder.Context()
 
         LOGGER.debug(f"Finding distributions in VendorImporter for context: {context}")
-        vendor_package_name = get_caller_matching_package(self._package_name_to_vendor_package.keys())
-        if vendor_package_name is None:
+        vendor_package_modules = get_caller_matching_package_from_store(self._package_store)
+        if vendor_package_modules is None:
             LOGGER.debug("Returning empty list in find_distributions because not part of library")
             return []
 
-        vendor_package = self._package_name_to_vendor_package[vendor_package_name]
+        vendor_package = vendor_package_modules.vendor_package
         LOGGER.debug(f"Returning all distributions in vendored path: {vendor_package.vendor_libs_path}")
         vars(context).update({"path": [str(vendor_package.vendor_libs_path)]})
         return MetadataPathFinder.find_distributions(context)
@@ -308,7 +300,7 @@ class VendorImporter(ReykIsolator, DistributionFinder):
 
     @property
     def package_names(self) -> set[str]:
-        return set(self._package_name_to_vendor_package.keys())
+        return set(self._package_store.get_package_names())
 
     @property
     def factory(self) -> type["VendorImporterFactory"]:

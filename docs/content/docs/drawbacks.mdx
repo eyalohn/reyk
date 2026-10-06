@@ -78,3 +78,30 @@ the original name may switch between them. As a result, code that retrieves modu
 
 This limitation does not affect normal Python code. Regular `import` statements and Python-level access
 to `sys.modules` continue to resolve to the correct vendored or non-vendored module.
+
+# Ambiguous Traceback Frames
+Reyk works by including the vendored prefix in each of your import when an import arrives from the isolated package.
+To identify whether the import caller is from the isolated package we inspect the traceback frames.
+If the first non-standard library and non-reyk frame is the isolated package then the import is vendored.
+To identify the frame's package we inspect the context for `__name__` and `__spec__` but there are some scenarios when neither are available.
+For example:
+1. Running your script in `python main.py` instead of `python -m main`
+2. Running python commands with `python -c`
+3. `runpy.run_path` simulates running python scripts similar to `python main.py`
+
+When we cannot identify the frame's package there are two options:
+## Filepath based Extrapolation
+We use the frame code filepath with the package directory specified in `VendorPackage`s to find
+the shortest package path when relative (with the least parents when relative) and assume its the module name.
+
+Multiple isolation may be used simultaneously therefore multiple package directories also may match the frame package,
+take the following scenario for example:
+1. Main Isolated Package - Package Directory: /home/user/my_project
+2. Isolated Package inside my_project (a vendored library) - Package Directory: /home/user/my_project/libs/my_library
+3. You ran `my_library` as a script and it therefore needs to use package directories for module path extraction
+4. Both the my_project and my_library packages are parents of the script (/home/user/my_project/libs/my_library/main/script.py)
+
+Our relative paths are:
+1. main/script.py
+2. libs/my_library/main/script.py
+Therefore the shortest path will yield the correct module name in the context: `main.script`.
