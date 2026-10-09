@@ -8,7 +8,6 @@ from typing import Optional
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from packaging.version import Version
 
 
 DEFAULT_VENDOR_LIBS_IMPORT_PATH = "libs"
@@ -36,6 +35,15 @@ class VendorPackage:
             return f"{self.package_name}.{DEFAULT_VENDOR_LIBS_IMPORT_PATH}"
 
         return self.vendor_libs_import_name
+
+
+@dataclass(frozen=True, order=True)
+class Version:
+    major: int
+    minor: int
+
+    def __str__(self) -> str:
+        return f"{self.major}.{self.minor}"
 
 
 class ReykIsolator(ABC):
