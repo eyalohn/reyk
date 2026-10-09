@@ -1,10 +1,11 @@
 from pathlib import Path
-from typing import Annotated, cast
+from typing import Annotated, Optional, cast
 
 import typer
 
 from reyk_cli.configuration_reader import DEFAULT_VENDOR_GROUP, read_reyk_configuration
 from reyk_cli.uv_vendorizer import UVBasedVendorizer
+from reyk_cli.version import VERSION
 
 app = typer.Typer(
     help="Manage isolated environment dependencies.",
@@ -17,9 +18,24 @@ group_option = typer.Option(
 )
 
 
+def version_callback(*, value: bool) -> None:
+    """Print the version of reyk-cli."""
+    if value:
+        print(f"Reyk CLI Version: {VERSION}")
+        raise typer.Exit
+
+
 @app.callback()
 def main(
     ctx: typer.Context,
+    version: Annotated[  # noqa: ARG001, value used in callback
+        Optional[bool],
+        typer.Option(
+            "--version",
+            help="Display the reyk-cli version",
+            callback=version_callback,
+        ),
+    ] = None,
     config: Annotated[
         Path,
         typer.Option(

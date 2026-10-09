@@ -11,6 +11,12 @@ from typer.testing import CliRunner
 from tests.example_project import ExampleProject
 
 
+def test_version(runner: CliRunner) -> None:
+    result = runner.invoke(app, ["--version"])
+    assert result.exit_code == 0
+    assert "Version:" in result.stdout
+
+
 def test_add(runner: CliRunner, example_project: ExampleProject) -> None:
     result = runner.invoke(app, ["add", "tomli"])
     assert result.exit_code == 0
