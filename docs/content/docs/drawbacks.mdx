@@ -89,7 +89,8 @@ For example:
 2. Running python commands with `python -c`
 3. `runpy.run_path` simulates running python scripts similar to `python main.py`
 
-When we cannot identify the frame's package there are two options:
+When we cannot identify the frame's package based on common fields we move to the following strategy:
+
 ## Filepath based Extrapolation
 We use the frame code filepath with the package directory specified in `VendorPackage`s to find
 the shortest package path when relative (with the least parents when relative) and assume its the module name.

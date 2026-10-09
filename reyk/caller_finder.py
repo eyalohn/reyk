@@ -11,7 +11,7 @@ from reyk.module_name_utils import extract_module_name_from_frame, is_module_fro
 from reyk.vendor_packages_store import VendorPackageModules, VendorPackagesStore
 
 LOGGER = logging.getLogger(__name__)
-MY_PACKAGE_NAME: str = cast(str, __package__)
+MY_PACKAGE_NAME = cast(str, __package__)
 MAIN_MODULE_NAME = "__main__"
 
 
