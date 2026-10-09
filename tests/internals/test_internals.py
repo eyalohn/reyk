@@ -18,8 +18,9 @@ from reyk.isolator_definition import VendorPackage
 
 
 FAKE_VENDOR_PACKAGE = VendorPackage(
-    package_name="fake_package_for_fake_installation",
-    vendor_libs_path=Path("fake_package_for_fake_installation", "libs"),
+    package_name=__name__.rsplit(".")[-1],
+    package_directory=Path(__file__).parent,
+    vendor_libs_path=Path(__file__).parent / "libs",
 )
 
 
@@ -41,8 +42,19 @@ def test_get_caller() -> None:
         pytest.param(["tests", "tests.internals"], "tests.internals", id="two matching packages chooses max depth"),
     ],
 )
-def test_get_caller_matching_package(package_names: list[str], expected_output: Optional[str]) -> None:
-    matching_package = get_caller_matching_package(package_names)
+def test_get_caller_matching_package_name(
+    package_names: list[str],
+    expected_output: Optional[str],
+) -> None:
+    as_vendor_packages = [
+        VendorPackage(
+            package_name=package_name,
+            package_directory=Path(__file__).parent,  # Fictive - only for testing package name logic
+            vendor_libs_path=Path(__file__).parent,
+        )
+        for package_name in package_names
+    ]
+    matching_package = get_caller_matching_package(as_vendor_packages)
     assert matching_package == expected_output
 
 
@@ -79,5 +91,6 @@ def test_get_caller_vendor_package() -> None:
     vendor_package = get_caller_vendor_package()
     assert vendor_package == VendorPackage(
         package_name="tests.internals",
+        package_directory=Path(__file__).parent,
         vendor_libs_path=Path(__file__).parent / "libs",
     )
