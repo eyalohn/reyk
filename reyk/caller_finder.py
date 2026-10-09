@@ -61,7 +61,7 @@ def get_caller_matching_package(packages: Sequence[VendorPackage]) -> Optional[s
     )
 
 
-def get_caller_frame_outside_reyk(packages: Sequence[VendorPackage] | None = None) -> StackFrame:
+def get_caller_frame_outside_reyk(packages: Optional[Sequence[VendorPackage]] = None) -> StackFrame:
     for frame in _iterate_over_stack(packages):
         if is_part_of_stdlib(frame.module_name):
             continue

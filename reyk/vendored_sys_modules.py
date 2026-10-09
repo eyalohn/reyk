@@ -31,7 +31,7 @@ class VendoredSysModules(UserDict[str, ModuleType]):
         self.original_sys_modules = original_sys_modules
         self._user_modules: dict[str, ModuleType] = original_sys_modules.copy()
         self._packages_store = packages_store
-        self._current_package_in_context: str | None = None
+        self._current_package_in_context: Optional[str] = None
         """
         The context is changed by the `VendorImporter` to manipulate whether access to `sys.modules`
         should include vendored packages already imported within an isolated package.
