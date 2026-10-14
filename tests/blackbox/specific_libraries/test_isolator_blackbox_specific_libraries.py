@@ -30,6 +30,7 @@ def install_test_libs(files_manager: ExampleProjectFileManager) -> None:
         "pika",  # Large library with lots of builtins usage
         "boto3",  # Lots of absolute imports
         "sqlalchemy",  # Accesses sys modules from inside partially-initialized module
+        "sqlalchemy.orm",  # Complex relative imports in partially-initialized modules
     ],
 )
 def test_import_library(files_manager: ExampleProjectFileManager, library_name: str) -> None:
@@ -115,7 +116,8 @@ def load_entry_point(entry_point):
 
 def _import_module_in_project(files_manager: ExampleProjectFileManager, library_name: str) -> ModuleType:
     files_manager.create_project_module(
-        module_name="module", content=f"imported_library = __import__('{library_name}')"
+        module_name="module",
+        content=f"imported_library = __import__('{library_name}')",
     )
     from example_project.module import imported_library
 

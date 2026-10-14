@@ -67,6 +67,7 @@ class VendorImporter(ReykIsolator, DistributionFinder):
         level: int = 0,
     ) -> ModuleType:
         # Note: ALL import calls should be in this function as to not increase the call stack significantly
+
         vendor_package = self._get_package_to_vendor(name)
         if vendor_package is None:
             # If importing a module which shouldn't be vendored
@@ -75,8 +76,13 @@ class VendorImporter(ReykIsolator, DistributionFinder):
             self._sys_modules_wrapper.remove_vendored_sys_modules()
             return self._original_builtins_import_method(name, globals, locals, fromlist, level)
 
-        vendored_import_path = self._vendor_import(vendor_package, name)
         self._sys_modules_wrapper.install_vendored_sys_modules(vendor_package.package_name)
+        if level > 0:
+            # If we do have a vendor package and its a relative import then we install vendored sys modules
+            # then import it as usual because relative imports don't need any changes
+            return self._original_builtins_import_method(name, globals, locals, fromlist, level)
+
+        vendored_import_path = self._vendor_import(vendor_package, name)
         imported_vendored: bool
         try:
             LOGGER.debug(f"Importing: {vendored_import_path}")
@@ -225,10 +231,6 @@ class VendorImporter(ReykIsolator, DistributionFinder):
         self,
         name: str,
     ) -> Optional[VendorPackage]:
-        if name.startswith(RELATIVE_IMPORT_PREFIX):
-            LOGGER.debug("Relative imports don't require changing the import path for vendored packages")
-            return None
-
         if is_part_of_stdlib(name):
             LOGGER.debug(f"Skipping vendor import attempt for {name} because the same name exists in stdlib")
             return None

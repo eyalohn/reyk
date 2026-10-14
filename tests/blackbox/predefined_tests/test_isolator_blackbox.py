@@ -142,6 +142,13 @@ def test_import_library_package_from_project(
         pytest.param(f"from .other_module import {MY_STRING_NAME}", id="From relative module"),
         pytest.param(
             f"""
+from . import other_module
+{MY_STRING_NAME} = other_module.{MY_STRING_NAME}
+""",
+            id="From relative current directory",
+        ),
+        pytest.param(
+            f"""
 import importlib
 other_module = importlib.import_module(".other_module", package=__package__)
 {MY_STRING_NAME} = other_module.{MY_STRING_NAME}
