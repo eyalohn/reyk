@@ -15,6 +15,10 @@ implementation (which might in the future not depend on overriding `__import__`)
 FACTORY_IMPLEMENTATION: type[ReykIsolatorFactory] = VendorImporterFactory
 
 
+class ReykIsolationError(Exception):
+    pass
+
+
 def isolate_package(vendor_package: VendorPackage) -> None:
     reyk = get_installed_reyk()
     if reyk is None:
@@ -24,7 +28,7 @@ def isolate_package(vendor_package: VendorPackage) -> None:
         installed_reyk_version = reyk.factory.version()
         current_reyk_version = FACTORY_IMPLEMENTATION.version()
         if installed_reyk_version.major != current_reyk_version.major:
-            raise ValueError(
+            raise ReykIsolationError(
                 f"Cannot install {vendor_package.package_name=} because the currently installed Reyk has "
                 f"a different major version. "
                 f"(Installed Version: {installed_reyk_version} / (Library Version: {current_reyk_version=}). "
@@ -36,7 +40,7 @@ def isolate_package(vendor_package: VendorPackage) -> None:
 
 def install_reyk(reyk_isolator: ReykIsolator) -> None:
     if hasattr(builtins, REYK_COMMUNICATION_ATTRIBUTE_NAME):
-        raise ValueError("Cannot install Reyk communication module when one already exists")
+        raise ReykIsolationError("Cannot install Reyk communication module when one already exists")
 
     reyk_isolator.install()
     setattr(builtins, REYK_COMMUNICATION_ATTRIBUTE_NAME, reyk_isolator)
@@ -45,7 +49,7 @@ def install_reyk(reyk_isolator: ReykIsolator) -> None:
 def uninstall_reyk() -> None:
     communication_module = get_installed_reyk()
     if communication_module is None:
-        raise ValueError(f"No communication module installed {communication_module=}")
+        raise ReykIsolationError(f"No communication module installed {communication_module=}")
 
     communication_module.uninstall()
     delattr(builtins, REYK_COMMUNICATION_ATTRIBUTE_NAME)
@@ -58,7 +62,12 @@ def get_installed_reyk() -> Optional[ReykIsolator]:
 def get_caller_vendor_package() -> VendorPackage:
     caller = get_caller_frame_outside_reyk()
     package, _, _ = caller.module_name.rpartition(".")
+    if len(package) == 0:
+        raise ReykIsolationError(f"Cannot determine package for {caller.module_name=}")
+
+    package_directory = caller.filename.parent.resolve()
     return VendorPackage(
         package_name=package,
-        vendor_libs_path=caller.filename.parent / DEFAULT_VENDOR_LIBS_IMPORT_PATH,
+        package_directory=package_directory,
+        vendor_libs_path=package_directory / DEFAULT_VENDOR_LIBS_IMPORT_PATH,
     )

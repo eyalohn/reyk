@@ -20,6 +20,10 @@ class VendorPackage:
     """
     Package to isolate - should be like `reyk` or like `reyk.sub_package`
     """
+    package_directory: Path
+    """
+    Path to the directory of the package to isolate.
+    """
     vendor_libs_path: Path
     """
     Path to the vendor libs directory (importable by `vendor_libs_import_name`)
@@ -29,6 +33,14 @@ class VendorPackage:
     The import name for the vendored libraries ie: `reyk.libs` or `libs`.
     The default (if `None`) will be the `{package_name}.libs`.
     """
+
+    def __post_init__(self) -> None:
+        self._validate_directory(self.package_directory, "package_directory")
+        self._validate_directory(self.vendor_libs_path, "vendor_libs_path")
+
+    def _validate_directory(self, directory: Path, field_name: str) -> None:
+        if not directory.exists() or not directory.is_dir():
+            raise ValueError(f"{field_name!s} does not exist or is not a directory: {directory}")
 
     @property
     def vendor_prefix(self) -> str:
