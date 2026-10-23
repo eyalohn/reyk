@@ -26,36 +26,41 @@ All fields are optional and fall back to their defaults if omitted.
 
 ## `isolate_package()` configuration
 
-`isolate_package()` is called in your package's **init**.py and installs the import hook at runtime. It accepts two optional parameters:
+`isolate_package()` is called in your package's **init**.py and installs the import hook at runtime. It accepts a single parameter:
 
 ```py
-def isolate_package(
-    package_path: Optional[Path] = None,
-    vendored_libs_dir_name: str = "libs",
-) -> None:
+def isolate_package(vendor_package: VendorPackage) -> None:
 ```
 
 ### Parameters
 
-- **`package_path`** (`Path | None`, default: `None`): The path to the package to isolate. When `None`, Reyk automatically detects the directory of the file that called isolate_package(). In almost all cases you can omit this parameter.
-- **`vendored_libs_dir_name`** (string, default: `"libs"`): The name of the subdirectory inside your package where vendored libraries are stored. This must match the `libraries-path` value in `pyproject.toml`.
+- **vendor_package** - The package to vendor, consists of the following fields:
+- **package_name** - Package to isolate - should be like `reyk` or like `reyk.sub_package`
+- **vendor_libs_path** - Path to the vendor libs directory (importable by `vendor_libs_import_name`)
+- **vendor_libs_import_name** - Optionally specify the import name for the vendored libraries ie: `reyk.libs` or `libs`.
+    The default (if `None`) will be the `{package_name}.libs`.
+
+You can create the vendor_package with get_caller_vendor_package() which will be generated based on your stacktrace
+(the caller package name and directory).
 
 ## Examples
 
 Calling with all defaults - the common case:
 
 ```py
-from reyk.isolator import isolate_package
+from reyk.isolator import isolate_package, get_caller_vendor_package
 
-isolate_package()
+isolate_package(get_caller_vendor_package())
 ```
 
 Calling with a custom libs directory name:
 
 ```py
+from pathlib import Path
 from reyk.isolator import isolate_package
+from reyk.isolator_definition import VendorPackage
 
-isolate_package(vendored_libs_dir_name="vendor")
+isolate_package(VendorPackage(package_name="vendor", vendor_libs_path=Path(__file__).parent))
 ```
 
 ```toml
