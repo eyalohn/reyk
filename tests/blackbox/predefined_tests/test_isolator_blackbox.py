@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from reyk.isolator import get_installed_reyk, uninstall_reyk
+from reyk.module_name_utils import ReykModuleNameExtractionError
 from tests.blackbox.test_distributions_finder import assert_distribution_names_subset
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 from tests.blackbox.libraries_manager import LibrariesManager
@@ -603,6 +604,37 @@ NON_ISOLATED_LIBRARY_MODULE = original_sys_modules.get("another_library.module")
         reyk = get_installed_reyk()
         if reyk is not None and reyk.package_names == {"isolated_library"}:
             uninstall_reyk()
+
+
+@pytest.mark.parametrize(
+    "variable_access_statement",
+    generate_variable_access_statement_params(
+        ALL_IMPORT_TECHNIQUES_BUT_RELATIVE,
+        "example_library.library_module",
+        MY_STRING_NAME,
+    ),
+)
+def test_import_from_script(files_manager: ExampleProjectFileManager, variable_access_statement: str) -> None:
+    """
+    A script ran by `python -c`/`python script.py` will result in the code
+    running without being aware of its package.
+    """
+    files_manager.create_library_module(
+        library_name="example_library",
+        module_name="library_module",
+        content=MY_STRING_DECLARATION_MODULE,
+    )
+    files_manager.create_project_module(
+        module_name="module",
+        content=f"""
+# Simulate being ran as a script
+__name__ = "__main__"
+__spec__ = None
+__package__ = None
+{variable_access_statement}
+""",
+    )
+    _assert_my_string_in_module()
 
 
 def test_file_attribute_correct(files_manager: ExampleProjectFileManager) -> None:
