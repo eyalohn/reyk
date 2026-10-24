@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, cast
 
 try:
-    import tomllib
+    import tomllib  # type: ignore[reportMissingImports]
 except ImportError:
     import tomli as tomllib  # type: ignore[reportMissingImports]
 

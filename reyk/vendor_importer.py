@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from typing import cast
 import builtins
 import functools
@@ -5,12 +6,13 @@ import importlib
 import importlib.metadata
 import logging
 import sys
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from importlib.metadata import Distribution, DistributionFinder, MetadataPathFinder
 from types import ModuleType
 from typing import Optional, Protocol
 
 from reyk.isolator_definition import ReykIsolator, ReykIsolatorFactory, VendorPackage, Version
+from reyk.module_name_utils import is_module_from_package
 from reyk.caller_finder import get_caller_matching_package_from_store
 from reyk.stdlib_finder import is_part_of_stdlib
 from reyk.vendor_packages_store import VendorPackagesStore
@@ -64,42 +66,41 @@ class VendorImporter(ReykIsolator, DistributionFinder):
         level: int = 0,
     ) -> ModuleType:
         # Note: ALL import calls should be in this function as to not increase the call stack significantly
-        vendor_package = self._get_package_to_vendor(name)
+
+        is_relative_import = level > 0
+        vendor_package = self._get_package_to_vendor(import_name=name, is_relative_import=is_relative_import)
         if vendor_package is None:
             # If importing a module which shouldn't be vendored
             # we need to exit the context to ensure we don't retrieve
             # a vendored module
-            self._sys_modules_wrapper.remove_vendored_sys_modules()
-            return self._original_builtins_import_method(name, globals, locals, fromlist, level)
+            with self._with_modules_context(None):
+                return self._original_builtins_import_method(name, globals, locals, fromlist, level)
 
-        vendored_import_path = self._vendor_import(vendor_package, name)
-        self._sys_modules_wrapper.install_vendored_sys_modules(vendor_package.package_name)
-        imported_vendored: bool
-        try:
-            LOGGER.debug(f"Importing: {vendored_import_path}")
-            # Install vendored modules to save us from importing the same module twice
-            # if it already exists in the sys.modules
-            module = self._original_builtins_import_method(vendored_import_path, globals, locals, fromlist, level)
-            imported_vendored = True
-        except ModuleNotFoundError as exc:
-            LOGGER.debug(f"Failed to import vendored: {name}: {exc!s}")
-            self._sys_modules_wrapper.remove_vendored_sys_modules()
-            module = self._original_builtins_import_method(name, globals, locals, fromlist, level)
-            imported_vendored = False
-
-        if imported_vendored:
-            is_absolute_import = fromlist is None or len(fromlist) == 0
-            if is_absolute_import:
-                module = self._retrieve_absolute_import_module(vendor_package, name, module)
-                self._add_imported_sub_modules_to_vendored(vendor_package, name, module)
+        if is_relative_import:
+            # If we do have a vendor package and its a relative import then we install vendored sys modules
+            # then import it as usual because relative imports don't need any changes
+            with self._with_modules_context(vendor_package.package_name):
+                module = self._original_builtins_import_method(name, globals, locals, fromlist, level)
+        else:
+            vendored_import_path = self._vendor_import(vendor_package, name)
+            try:
+                LOGGER.debug(f"Importing: {vendored_import_path}")
+                with self._with_modules_context(vendor_package.package_name):
+                    module = self._original_builtins_import_method(
+                        vendored_import_path, globals, locals, fromlist, level
+                    )
+            except ModuleNotFoundError as exc:
+                LOGGER.debug(f"Failed to import vendored: {name}: {exc!s}")
+                if self._is_error_because_of_nonexistent_module(exc, vendored_import_path):
+                    raise
+                # Likely trying to import a module in the importing package/a non-vendored library
+                with self._with_modules_context(None):
+                    module = self._original_builtins_import_method(name, globals, locals, fromlist, level)
             else:
-                # Add the non-vendored name to sys modules as well (its in the vendored
-                # sys modules so this should go to `package_modules` only)
-                sys.modules[name] = module
-
-            # It's important at the end to return to vendored sys module if we imported
-            # a vendored package in case an import was made inside this import which changed the state
-            self._sys_modules_wrapper.install_vendored_sys_modules(vendor_package.package_name)
+                is_plain_import = fromlist is None or len(fromlist) == 0
+                if is_plain_import:
+                    module = self._retrieve_absolute_import_module(vendor_package, name, module)
+                    self._add_imported_sub_modules_to_vendored(vendor_package, name, module)
 
         LOGGER.debug(f"Imported: {module}")
         return module
@@ -110,19 +111,28 @@ class VendorImporter(ReykIsolator, DistributionFinder):
         package: Optional[str] = None,
     ) -> ModuleType:
         # If package is not None it's a relative import
-        vendor_package = self._get_package_to_vendor(name)
-        if vendor_package is None or package is not None:
+        is_relative_import = package is not None
+        vendor_package = self._get_package_to_vendor(import_name=name, is_relative_import=is_relative_import)
+        if vendor_package is None:
             self._sys_modules_wrapper.remove_vendored_sys_modules()
             return self._original_importlib_import_method(name, package)
 
-        vendored_import_path = self._vendor_import(vendor_package, name)
+        # Relative imports need fix - see https://github.com/eyalohn/reyk/issues/53
+        vendored_import_path = name if is_relative_import else self._vendor_import(vendor_package, name)
+        self._sys_modules_wrapper.install_vendored_sys_modules(vendor_package.package_name)
         try:
-            self._sys_modules_wrapper.install_vendored_sys_modules(vendor_package.package_name)
-            return self._original_importlib_import_method(vendored_import_path, None)
+            imported_module = self._original_importlib_import_method(vendored_import_path, package)
         except ModuleNotFoundError as exc:
-            self._sys_modules_wrapper.remove_vendored_sys_modules()
             LOGGER.debug(f"Failed to import vendored: {name}: {exc!s}")
-            return self._original_importlib_import_method(name, None)
+            if self._is_error_because_of_nonexistent_module(exc, vendored_import_path):
+                raise
+            self._sys_modules_wrapper.remove_vendored_sys_modules()
+            return self._original_importlib_import_method(name, package)
+
+        # It's important at the end to return to vendored sys module if we imported
+        # a vendored package in case an import was made inside this import which changed the state
+        self._sys_modules_wrapper.install_vendored_sys_modules(vendor_package.package_name)
+        return imported_module
 
     def _retrieve_absolute_import_module(
         self,
@@ -220,19 +230,19 @@ class VendorImporter(ReykIsolator, DistributionFinder):
 
     def _get_package_to_vendor(
         self,
-        name: str,
+        *,
+        import_name: str,
+        is_relative_import: bool,
     ) -> Optional[VendorPackage]:
-        if name.startswith(RELATIVE_IMPORT_PREFIX):
-            LOGGER.debug("Relative imports don't require changing the import path for vendored packages")
-            return None
+        if not is_relative_import:
+            # Can't be a relative import to stdlib or directly to a package
+            if is_part_of_stdlib(import_name):
+                LOGGER.debug(f"Skipping vendor import attempt for {import_name} because the same name exists in stdlib")
+                return None
 
-        if is_part_of_stdlib(name):
-            LOGGER.debug(f"Skipping vendor import attempt for {name} because the same name exists in stdlib")
-            return None
-
-        if self._package_store.is_package_in_store(name):
-            LOGGER.debug(f"Cannot re-import the library: {name=}")
-            return None
+            if self._package_store.is_package_in_store(import_name):
+                LOGGER.debug(f"Cannot re-import the library: {import_name=}")
+                return None
 
         matching_vendor_package_modules = get_caller_matching_package_from_store(self._package_store)
         if matching_vendor_package_modules is None:
@@ -240,7 +250,7 @@ class VendorImporter(ReykIsolator, DistributionFinder):
             return None
 
         matching_vendor_package = matching_vendor_package_modules.vendor_package
-        if name.startswith(matching_vendor_package.vendor_prefix):
+        if import_name.startswith(matching_vendor_package.vendor_prefix):
             LOGGER.debug(
                 "The attempted import is already for a vendored package therefore there's "
                 "no need to change the import path"
@@ -248,6 +258,27 @@ class VendorImporter(ReykIsolator, DistributionFinder):
             return None
 
         return matching_vendor_package
+
+    def _is_error_because_of_nonexistent_module(self, error: ModuleNotFoundError, imported_module_name: str) -> bool:
+        # We should only try to re-import if the failed module is the vendored_import_path or one of its
+        # ancestors. If it's not the case then it means the vendored import path was imported but it
+        # ran an unsuccessful import itself
+        return error.name is not None and not is_module_from_package(imported_module_name, error.name)
+
+    @contextmanager
+    def _with_modules_context(self, package_name_in_context: Optional[str]) -> Iterator[None]:
+        package_before_context_change = self._sys_modules_wrapper.current_package_in_context
+        self._sys_modules_wrapper.set_current_package_in_context(package_name_in_context)
+        try:
+            yield
+        except Exception:
+            # Return to the previous state as we are returning to try-except without having imported the module
+            self._sys_modules_wrapper.set_current_package_in_context(package_before_context_change)
+            raise
+
+        # It's important at the end to return to vendored sys module if we imported
+        # a vendored package in case an import was made inside this import which changed the state
+        self._sys_modules_wrapper.set_current_package_in_context(package_name_in_context)
 
     def find_distributions(
         self,
