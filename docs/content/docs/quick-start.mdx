@@ -22,9 +22,9 @@ uv add reyk
 Enable isolation from your package's `__init__.py`:
 
 ```python
-from reyk.isolator import isolate_package
+from reyk.isolator import isolate_package, get_caller_vendor_package
 
-isolate_package()
+isolate_package(get_caller_vendor_package())
 ```
 
 **That's it!** Inside `your_package`, `import requests` resolves to `your_package.libs.requests`. Outside `your_package`, `import requests` continues to resolve to the normal/global install.
