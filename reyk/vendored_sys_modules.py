@@ -48,14 +48,14 @@ class VendoredSysModules(UserDict[str, ModuleType]):
         )
         self._update_modules_with_package_tree(package)
 
-    def set_current_package_in_context(self, package_name: str | None) -> None:
+    def set_current_package_in_context(self, package_name: Optional[str]) -> None:
         if package_name is None:
             self.remove_vendored_sys_modules()
         else:
             self.install_vendored_sys_modules(package_name)
 
     @property
-    def current_package_in_context(self) -> str | None:
+    def current_package_in_context(self) -> Optional[str]:
         return self._current_package_in_context
 
     def install_vendored_sys_modules(self, package_name: str) -> None:
