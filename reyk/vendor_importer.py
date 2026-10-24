@@ -267,7 +267,7 @@ class VendorImporter(ReykIsolator, DistributionFinder):
         return error.name is not None and not is_module_from_package(imported_module_name, error.name)
 
     @contextmanager
-    def _with_modules_context(self, package_name_in_context: str | None) -> Iterator[None]:
+    def _with_modules_context(self, package_name_in_context: Optional[str]) -> Iterator[None]:
         package_before_context_change = self._sys_modules_wrapper.current_package_in_context
         self._sys_modules_wrapper.set_current_package_in_context(package_name_in_context)
         try:
