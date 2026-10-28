@@ -31,6 +31,7 @@ def install_test_libs(files_manager: ExampleProjectFileManager) -> None:
         "boto3",  # Lots of absolute imports
         "sqlalchemy",  # Accesses sys modules from inside partially-initialized module
         "sqlalchemy.orm",  # Complex relative imports in partially-initialized modules
+        "setuptools",  # distutils hack creates a custom MetaPathFinder
     ],
 )
 def test_import_library(files_manager: ExampleProjectFileManager, library_name: str) -> None:
