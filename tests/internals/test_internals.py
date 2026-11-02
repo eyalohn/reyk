@@ -26,7 +26,7 @@ FAKE_VENDOR_PACKAGE = VendorPackage(
 
 def test_get_caller() -> None:
     caller = get_caller_frame_outside_reyk()
-    assert caller.module_name == "tests.internals.test_internals"
+    assert next(caller.module_names_iter) == "tests.internals.test_internals"
 
 
 @pytest.mark.parametrize(
@@ -45,12 +45,13 @@ def test_get_caller() -> None:
 def test_get_caller_matching_package_name(
     package_names: list[str],
     expected_output: Optional[str],
+    tmp_path: Path,
 ) -> None:
     as_vendor_packages = [
         VendorPackage(
             package_name=package_name,
-            package_directory=Path(__file__).parent,  # Fictive - only for testing package name logic
-            vendor_libs_path=Path(__file__).parent,
+            package_directory=tmp_path,
+            vendor_libs_path=tmp_path,
         )
         for package_name in package_names
     ]

@@ -61,9 +61,13 @@ def get_installed_reyk() -> Optional[ReykIsolator]:
 
 def get_caller_vendor_package() -> VendorPackage:
     caller = get_caller_frame_outside_reyk()
-    package, _, _ = caller.module_name.rpartition(".")
+    module_name = next(caller.module_names_iter, None)
+    if module_name is None:
+        raise ReykIsolationError(f"Cannot determine module name for caller: {caller.filename}")
+
+    package, _, _ = module_name.rpartition(".")
     if len(package) == 0:
-        raise ReykIsolationError(f"Cannot determine package for {caller.module_name=}")
+        raise ReykIsolationError(f"Cannot determine package for {module_name=}")
 
     package_directory = caller.filename.parent.resolve()
     return VendorPackage(
