@@ -41,7 +41,7 @@ def isolate_package(vendor_package: VendorPackage) -> None:
     The default (if `None`) will be the `{package_name}.libs`.
 - **context_detection** - Optional `ContextDetectionConfig` containing code locations to ignore for this package.
 
-You can create the vendor_package with get_caller_vendor_package() which will be generated based on your stacktrace
+You can create the vendor_package with create_caller_vendor_package() which will be generated based on your stacktrace
 (the caller package name and directory).
 
 ## Examples
@@ -49,9 +49,9 @@ You can create the vendor_package with get_caller_vendor_package() which will be
 Calling with all defaults - the common case:
 
 ```py
-from reyk.isolator import isolate_package, get_caller_vendor_package
+from reyk.isolator import isolate_package, create_caller_vendor_package
 
-isolate_package(get_caller_vendor_package())
+isolate_package(create_caller_vendor_package())
 ```
 
 Calling with a custom libs directory name:
@@ -71,17 +71,14 @@ libraries-path = "vendor"
 
 ## Context detection
 
-Set `context_detection` on the `VendorPackage` to configure locations Reyk should ignore
-when determining whether an operation belongs to that package:
+Add rules through `ContextDetectionConfig.user_ignore_rules` to specify modules or functions
+Reyk should skip when determining whether an operation belongs to your package:
 
 ```py
-from dataclasses import replace
+from reyk.isolator_definition import CodeLocation, ContextDetectionConfig
+from reyk.isolator import create_caller_vendor_package, isolate_package
 
-from reyk.config import CodeLocation, ContextDetectionConfig
-from reyk.isolator import get_caller_vendor_package, isolate_package
-
-package = replace(
-    get_caller_vendor_package(),
+package = create_caller_vendor_package(
     context_detection=ContextDetectionConfig(
         user_ignore_rules=(
             CodeLocation(module="company.plugin_loader"),
@@ -91,9 +88,8 @@ package = replace(
 isolate_package(package)
 ```
 
-`VendorPackage` is frozen. Supply configuration when constructing it, or use
-`dataclasses.replace` to customize the package returned by `get_caller_vendor_package()`
-before registering it with `isolate_package()`.
+`VendorPackage` is frozen. Pass `context_detection` when constructing it or calling
+`create_caller_vendor_package()`, before registering it with `isolate_package()`.
 
 Module names match `__name__` or `__spec__.name` exactly; submodules are not included.
 File-path-derived names are used only for package ownership, not ignore rules.
@@ -106,13 +102,7 @@ to imports, `sys.modules` access, and distribution discovery. They also skip imp
 matching function performs for its own dependencies, so select locations accordingly.
 
 Each package has its own configuration. A rule on one package does not allow another
-package to look past that location. `ContextDetectionConfig` always includes the built-in
-rule for `_virtualenv.find_spec`, in addition to Reyk's existing handling of its own code
-and the standard library. Configure additional locations through `user_ignore_rules`.
-The read-only `ignore` property concatenates `system_ignore_rules` and `user_ignore_rules`.
-`system_ignore_rules` cannot be supplied to the constructor or
-changed on the frozen configuration, so an empty `user_ignore_rules` tuple keeps the
-built-in rule.
+package to look past that location.
 
 ## Keeping both surfaces in sync
 

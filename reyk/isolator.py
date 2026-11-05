@@ -1,7 +1,13 @@
 import builtins
 from typing import Optional, cast
 
-from reyk.isolator_definition import DEFAULT_VENDOR_LIBS_IMPORT_PATH, ReykIsolator, ReykIsolatorFactory, VendorPackage
+from reyk.isolator_definition import (
+    DEFAULT_VENDOR_LIBS_IMPORT_PATH,
+    ContextDetectionConfig,
+    ReykIsolator,
+    ReykIsolatorFactory,
+    VendorPackage,
+)
 from reyk.caller_finder import get_caller_frame_outside_reyk
 from reyk.vendor_importer import VendorImporterFactory
 
@@ -59,7 +65,11 @@ def get_installed_reyk() -> Optional[ReykIsolator]:
     return cast(Optional[ReykIsolator], getattr(builtins, REYK_COMMUNICATION_ATTRIBUTE_NAME, None))
 
 
-def get_caller_vendor_package() -> VendorPackage:
+def create_caller_vendor_package(*, context_detection: Optional[ContextDetectionConfig] = None) -> VendorPackage:
+    """Create a package definition from the caller, with optional context detection rules."""
+    if context_detection is None:
+        context_detection = ContextDetectionConfig()
+
     caller = get_caller_frame_outside_reyk()
     module_name = next(caller.module_names.iter_all_names(), None)
     if module_name is None:
@@ -74,4 +84,5 @@ def get_caller_vendor_package() -> VendorPackage:
         package_name=package,
         package_directory=package_directory,
         vendor_libs_path=package_directory / DEFAULT_VENDOR_LIBS_IMPORT_PATH,
+        context_detection=context_detection,
     )

@@ -8,7 +8,7 @@ from textwrap import dedent, indent
 
 import pytest
 
-from reyk.config import CodeLocation, ContextDetectionConfig
+from reyk.isolator_definition import CodeLocation, ContextDetectionConfig
 from reyk.isolator import get_installed_reyk, uninstall_reyk
 from reyk.module_name_utils import ReykModuleNameExtractionError
 from tests.blackbox.test_distributions_finder import assert_distribution_names_subset
@@ -534,8 +534,8 @@ def test_multiple_isolation_parent_first(
         library_name="isolated_library",
         module_name="module",
         content="""
-from reyk.isolator import isolate_package, get_caller_vendor_package
-isolate_package(get_caller_vendor_package())
+from reyk.isolator import isolate_package, create_caller_vendor_package
+isolate_package(create_caller_vendor_package())
 
 def import_my_string() -> str:
     from another_library.module import MY_STRING
@@ -579,8 +579,8 @@ def test_mimic_c_import_imports_isolated_library(
 import sys
 original_sys_modules = sys.modules.original_sys_modules
 
-from reyk.isolator import isolate_package, get_caller_vendor_package
-isolate_package(get_caller_vendor_package())
+from reyk.isolator import isolate_package, create_caller_vendor_package
+isolate_package(create_caller_vendor_package())
 
 from another_library.module import MY_STRING
 ISOLATED_LIBRARY_MODULE = original_sys_modules.get("another_library.module")

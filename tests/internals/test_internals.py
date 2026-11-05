@@ -12,9 +12,9 @@ from reyk.isolator import (
     get_installed_reyk,
     isolate_package,
     uninstall_reyk,
-    get_caller_vendor_package,
+    create_caller_vendor_package,
 )
-from reyk.isolator_definition import VendorPackage
+from reyk.isolator_definition import CodeLocation, ContextDetectionConfig, VendorPackage
 
 
 FAKE_VENDOR_PACKAGE = VendorPackage(
@@ -88,10 +88,20 @@ def test_get_vendor_importer_install_and_uninstall_with_meta_path_manipulation()
     assert get_installed_reyk() is None
 
 
-def test_get_caller_vendor_package() -> None:
-    vendor_package = get_caller_vendor_package()
+def test_create_caller_vendor_package() -> None:
+    vendor_package = create_caller_vendor_package()
     assert vendor_package == VendorPackage(
         package_name="tests.internals",
         package_directory=Path(__file__).parent,
         vendor_libs_path=Path(__file__).parent / "libs",
     )
+
+
+def test_create_caller_vendor_package_with_context_detection() -> None:
+    context_detection = ContextDetectionConfig(
+        user_ignore_rules=(CodeLocation(module="external_proxy", function="forward"),)
+    )
+
+    vendor_package = create_caller_vendor_package(context_detection=context_detection)
+
+    assert vendor_package.context_detection is context_detection

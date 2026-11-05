@@ -1,20 +1,6 @@
 from pathlib import Path
-
 import pytest
-
 from reyk.isolator_definition import CodeLocation, VendorPackage
-
-
-@pytest.mark.parametrize(
-    "location",
-    [
-        pytest.param({"module": ""}, id="empty-module-name"),
-        pytest.param({"module": "proxy", "function": ""}, id="empty-function-name"),
-    ],
-)
-def test_empty_code_location_names_are_rejected(location: dict[str, str]) -> None:
-    with pytest.raises(ValueError, match="must not be empty"):
-        CodeLocation(**location)
 
 
 @pytest.mark.parametrize(
@@ -49,3 +35,15 @@ def test_vendor_package_rejects_invalid_directories(
             package_directory=tmp_path / package_directory,
             vendor_libs_path=tmp_path / vendor_libs_path,
         )
+
+
+@pytest.mark.parametrize(
+    "location",
+    [
+        pytest.param({"module": ""}, id="empty-module-name"),
+        pytest.param({"module": "proxy", "function": ""}, id="empty-function-name"),
+    ],
+)
+def test_empty_code_location_names_are_rejected(location: dict[str, str]) -> None:
+    with pytest.raises(ValueError, match="must not be empty"):
+        CodeLocation(**location)
