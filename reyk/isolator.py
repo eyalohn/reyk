@@ -61,7 +61,7 @@ def get_installed_reyk() -> Optional[ReykIsolator]:
 
 def get_caller_vendor_package() -> VendorPackage:
     caller = get_caller_frame_outside_reyk()
-    module_name = next(caller.module_names_iter, None)
+    module_name = next(caller.module_names.iter_all_names(), None)
     if module_name is None:
         raise ReykIsolationError(f"Cannot determine module name for caller: {caller.filename}")
 

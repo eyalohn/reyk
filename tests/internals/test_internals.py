@@ -26,7 +26,7 @@ FAKE_VENDOR_PACKAGE = VendorPackage(
 
 def test_get_caller() -> None:
     caller = get_caller_frame_outside_reyk()
-    assert next(caller.module_names_iter) == "tests.internals.test_internals"
+    assert next(caller.module_names.iter_all_names()) == "tests.internals.test_internals"
 
 
 @pytest.mark.parametrize(

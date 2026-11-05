@@ -1,9 +1,12 @@
 import inspect
 import itertools
+from dataclasses import dataclass
+from enum import Enum
+from functools import cached_property, partial
 from abc import ABC, abstractmethod
 from pathlib import Path
 from types import FrameType
-from collections.abc import Iterator, Sequence, Iterable
+from collections.abc import Callable, Iterator, Sequence, Iterable
 from typing import Optional
 
 from reyk.isolator_definition import VendorPackage
@@ -49,36 +52,76 @@ def calculate_package_tree(module_name: str) -> set[str]:
     return set(itertools.accumulate(module_name.split("."), lambda part1, part2: f"{part1}.{part2}"))
 
 
-def extract_module_name_from_frame(
+@dataclass
+class LazyModuleName:
+    extract: Callable[[], Optional[str]]
+
+    @cached_property
+    def value(self) -> Optional[str]:
+        return self.extract()
+
+
+@dataclass
+class ModuleNameCandidates:
+    candidates: dict["ModuleNameSource", LazyModuleName]
+
+    def get(self, source: "ModuleNameSource") -> Optional[str]:
+        """Retrieve a source's name, evaluating it only on first access."""
+        return self.candidates[source].value
+
+    def iter_declared_names(self) -> Iterator[str]:
+        return self._iterate_unique((ModuleNameSource.DECLARED, ModuleNameSource.SPEC))
+
+    def iter_all_names(self) -> Iterator[str]:
+        has_module_name = False
+        for name in self._iterate_unique(ModuleNameSource):
+            has_module_name = True
+            yield name
+
+        if not has_module_name:
+            raise ReykModuleNameExtractionError("Unable to extract module name from frame")
+
+    def _iterate_unique(self, sources: Iterable["ModuleNameSource"]) -> Iterator[str]:
+        seen: set[str] = set()
+        for source in sources:
+            name = self.get(source)
+            if name is not None and name not in seen:
+                seen.add(name)
+                yield name
+
+
+def extract_module_names_from_frame(
     frame: FrameType,
     potential_packages: Optional[Sequence[VendorPackage]],
-) -> Iterator[str]:
-    """Yield unique candidates in priority order, evaluating each method only when requested."""
-    seen: set[str] = set()
-    for extractor in _SORTED_EXTRACTION_METHODS_BY_PRIORITY:
-        module_name = extractor.extract(frame, potential_packages)
-        if module_name is not None and module_name not in seen:
-            seen.add(module_name)
-            yield module_name
-
-    if len(seen) == 0:
-        raise ReykModuleNameExtractionError(f"Unable to extract module name from: {frame=}")
+) -> ModuleNameCandidates:
+    """Create reusable candidates, evaluating and caching each extractor only when requested."""
+    return ModuleNameCandidates(
+        candidates={source: source.value.as_lazy_name(frame, potential_packages) for source in ModuleNameSource},
+    )
 
 
 class _ModuleNameExtractor(ABC):
+    @classmethod
+    def as_lazy_name(
+        cls,
+        frame: FrameType,
+        potential_packages: Optional[Sequence[VendorPackage]],
+    ) -> LazyModuleName:
+        return LazyModuleName(partial(cls.extract, frame, potential_packages))
+
+    @staticmethod
     @abstractmethod
     def extract(
-        self,
         frame: FrameType,
         potential_packages: Optional[Sequence[VendorPackage]],
     ) -> Optional[str]: ...
 
 
 class _DeclaredModuleNameExtractor(_ModuleNameExtractor):
+    @staticmethod
     def extract(
-        self,
         frame: FrameType,
-        potential_packages: Optional[Sequence[VendorPackage]],  # noqa: ARG002
+        potential_packages: Optional[Sequence[VendorPackage]],  # noqa: ARG004
     ) -> Optional[str]:
         module_name = frame.f_globals.get("__name__")
 
@@ -94,10 +137,10 @@ class _DeclaredModuleNameExtractor(_ModuleNameExtractor):
 
 
 class _ModuleSpecNameExtractor(_ModuleNameExtractor):
+    @staticmethod
     def extract(
-        self,
         frame: FrameType,
-        potential_packages: Optional[Sequence[VendorPackage]],  # noqa: ARG002
+        potential_packages: Optional[Sequence[VendorPackage]],  # noqa: ARG004
     ) -> Optional[str]:
         spec = frame.f_globals.get("__spec__")
         if spec is None:
@@ -117,19 +160,19 @@ class _ModuleSpecNameExtractor(_ModuleNameExtractor):
 
 
 class _FilePathModuleNameExtractor(_ModuleNameExtractor):
+    @staticmethod
     def extract(
-        self,
         frame: FrameType,
         potential_packages: Optional[Sequence[VendorPackage]],
     ) -> Optional[str]:
         if potential_packages is None or len(potential_packages) == 0:
             return None
 
-        module_path = self._get_module_file_path(frame)
+        module_path = _FilePathModuleNameExtractor._get_module_file_path(frame)
         if module_path is None:
             return None
 
-        return self._try_extract_module_name_from_path(module_path, potential_packages)
+        return _FilePathModuleNameExtractor._try_extract_module_name_from_path(module_path, potential_packages)
 
     @staticmethod
     def _get_module_file_path(frame: FrameType) -> Optional[Path]:
@@ -139,35 +182,38 @@ class _FilePathModuleNameExtractor(_ModuleNameExtractor):
 
         return Path(filename).resolve()
 
+    @staticmethod
     def _try_extract_module_name_from_path(
-        self,
         module_path: Path,
         potential_packages: Sequence[VendorPackage],
     ) -> Optional[str]:
         return min(
-            self._get_potential_module_names_from_path(module_path, potential_packages),
+            _FilePathModuleNameExtractor._get_potential_module_names_from_path(module_path, potential_packages),
             key=get_module_packages_count,
             default=None,
         )
 
+    @staticmethod
     def _get_potential_module_names_from_path(
-        self,
         module_path: Path,
         potential_packages: Sequence[VendorPackage],
     ) -> Iterable[str]:
         for potential_package in potential_packages:
-            potential_module_name = self._try_build_module_name_from_path(potential_package, module_path)
+            potential_module_name = _FilePathModuleNameExtractor._try_build_module_name_from_path(
+                potential_package, module_path
+            )
             if potential_module_name is not None:
                 yield potential_module_name
 
-    def _try_build_module_name_from_path(self, potential_package: VendorPackage, module_path: Path) -> Optional[str]:
+    @staticmethod
+    def _try_build_module_name_from_path(potential_package: VendorPackage, module_path: Path) -> Optional[str]:
         try:
             relative_path = module_path.relative_to(potential_package.package_directory)
         except ValueError:
             # Module path is not relative to package
             return None
 
-        relative_module_name = self._try_build_module_name_from_relative_path(relative_path)
+        relative_module_name = _FilePathModuleNameExtractor._try_build_module_name_from_relative_path(relative_path)
         if relative_module_name is None:
             return None
 
@@ -198,8 +244,9 @@ def _is_virtual_value(module_name: str) -> bool:
     return module_name.startswith(_VIRTUAL_MODULE_NAME_PREFIX) and module_name.endswith(_VIRTUAL_MODULE_NAME_SUFFIX)
 
 
-_SORTED_EXTRACTION_METHODS_BY_PRIORITY: tuple[_ModuleNameExtractor, ...] = (
-    _DeclaredModuleNameExtractor(),
-    _ModuleSpecNameExtractor(),
-    _FilePathModuleNameExtractor(),
-)
+class ModuleNameSource(Enum):
+    """Sources module names can be retrieved from. Sorted by reliability"""
+
+    DECLARED = _DeclaredModuleNameExtractor
+    SPEC = _ModuleSpecNameExtractor
+    PATH = _FilePathModuleNameExtractor

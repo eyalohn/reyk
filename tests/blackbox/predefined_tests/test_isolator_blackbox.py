@@ -1,11 +1,14 @@
 # pyright: reportMissingImports=false
 import sys
 from collections.abc import Callable
+from contextlib import AbstractContextManager, nullcontext
 from importlib.metadata import Distribution
 from pathlib import Path
+from textwrap import dedent, indent
 
 import pytest
 
+from reyk.config import CodeLocation, ContextDetectionConfig
 from reyk.isolator import get_installed_reyk, uninstall_reyk
 from reyk.module_name_utils import ReykModuleNameExtractionError
 from tests.blackbox.test_distributions_finder import assert_distribution_names_subset
@@ -685,6 +688,140 @@ def test_find_distributions(
 
     distributions = distributions_finder()
     assert_distribution_names_subset(distributions, library_names)
+
+
+DEFAULT_CONTEXT_CONFIG = ContextDetectionConfig()
+IGNORE_EXTERNAL_PROXY_CONFIG = ContextDetectionConfig(
+    user_ignore_rules=(CodeLocation(module="external_proxy", function="forward"),),
+)
+
+
+def _external_proxy_context_cases(without_rule: object, with_rule: object) -> list[object]:
+    return [
+        pytest.param(DEFAULT_CONTEXT_CONFIG, without_rule, id="proxy-keeps-own-context"),
+        pytest.param(IGNORE_EXTERNAL_PROXY_CONFIG, with_rule, id="proxy-uses-caller-context"),
+    ]
+
+
+def _create_project_with_external_proxy(
+    files_manager: ExampleProjectFileManager,
+    libraries_manager: LibrariesManager,
+    proxy_forward_implementation: str,
+    projects_preload_imports: str = "",
+) -> None:
+    files_manager.create_library_module(
+        library_name="example_library", module_name="__init__", content=MY_STRING_DECLARATION_MODULE
+    )
+    files_manager.create_project_module(
+        module_name="module",
+        content=f"""
+{projects_preload_imports}
+import external_proxy
+
+def run():
+    return external_proxy.forward()
+""",
+    )
+    proxy_files_manager = libraries_manager.create_library("external_proxy")
+    proxy_files_manager.create_project_module(
+        module_name="__init__",
+        content=f"""
+def forward():
+{indent(dedent(proxy_forward_implementation), "    ")}
+""",
+    )
+
+
+@pytest.mark.parametrize(
+    ("context_detection_config", "expected_outcome"),
+    _external_proxy_context_cases(
+        without_rule=pytest.raises(ModuleNotFoundError, check=lambda error: error.name == "example_library"),
+        with_rule=nullcontext(),
+    ),
+    indirect=["context_detection_config"],
+)
+@pytest.mark.parametrize(
+    "import_expression",
+    [
+        pytest.param("__import__('example_library')", id="builtin-import"),
+        pytest.param("importlib.import_module('example_library')", id="importlib-import"),
+    ],
+)
+def test_external_proxy_import(
+    files_manager: ExampleProjectFileManager,
+    libraries_manager: LibrariesManager,
+    expected_outcome: AbstractContextManager[object],
+    import_expression: str,
+) -> None:
+    _create_project_with_external_proxy(
+        files_manager=files_manager,
+        libraries_manager=libraries_manager,
+        proxy_forward_implementation=f"""
+import importlib
+return {import_expression}.MY_STRING
+""",
+    )
+    from example_project.module import run
+
+    with expected_outcome:
+        assert run() == MY_STRING_EXPECTED_VALUE
+
+
+@pytest.mark.parametrize(
+    ("context_detection_config", "expected_outcome"),
+    _external_proxy_context_cases(
+        without_rule=pytest.raises(KeyError, check=lambda error: error.args == ("example_library",)),
+        with_rule=nullcontext(),
+    ),
+    indirect=["context_detection_config"],
+)
+def test_external_proxy_sys_modules(
+    files_manager: ExampleProjectFileManager,
+    libraries_manager: LibrariesManager,
+    expected_outcome: AbstractContextManager[object],
+) -> None:
+    _create_project_with_external_proxy(
+        files_manager=files_manager,
+        libraries_manager=libraries_manager,
+        proxy_forward_implementation="""
+import sys
+return sys.modules['example_library'].MY_STRING
+""",
+        projects_preload_imports="""
+# Preload the vendored library so it exists in the project's sys.modules before the proxy accesses it.
+import example_library
+""",
+    )
+    from example_project.module import run
+
+    with expected_outcome:
+        assert run() == MY_STRING_EXPECTED_VALUE
+
+
+@pytest.mark.parametrize(
+    ("context_detection_config", "should_use_caller_context"),
+    _external_proxy_context_cases(without_rule=False, with_rule=True),
+    indirect=["context_detection_config"],
+)
+def test_external_proxy_distributions(
+    *,
+    files_manager: ExampleProjectFileManager,
+    libraries_manager: LibrariesManager,
+    should_use_caller_context: bool,
+) -> None:
+    files_manager.create_fake_dist_info(library_name="example_library")
+    _create_project_with_external_proxy(
+        files_manager=files_manager,
+        libraries_manager=libraries_manager,
+        proxy_forward_implementation="""
+import importlib.metadata
+return list(importlib.metadata.distributions())
+""",
+    )
+    from example_project.module import run
+
+    distribution_names = {distribution.metadata["Name"] for distribution in run()}
+    assert ("example_library" in distribution_names) is should_use_caller_context
 
 
 def _assert_my_string_in_module() -> None:
