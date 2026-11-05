@@ -3,7 +3,6 @@ import shutil
 import sys
 from collections.abc import Callable, Iterable
 from importlib.metadata import Distribution
-from pathlib import Path
 from types import ModuleType
 
 import pytest
@@ -31,6 +30,7 @@ def install_test_libs(files_manager: ExampleProjectFileManager) -> None:
         "boto3",  # Lots of absolute imports
         "sqlalchemy",  # Accesses sys modules from inside partially-initialized module
         "sqlalchemy.orm",  # Complex relative imports in partially-initialized modules
+        "setuptools",  # The default context detection rules skip virtualenv's finder.
     ],
 )
 def test_import_library(files_manager: ExampleProjectFileManager, library_name: str) -> None:

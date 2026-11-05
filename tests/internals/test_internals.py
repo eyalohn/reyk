@@ -12,9 +12,9 @@ from reyk.isolator import (
     get_installed_reyk,
     isolate_package,
     uninstall_reyk,
-    get_caller_vendor_package,
+    create_caller_vendor_package,
 )
-from reyk.isolator_definition import VendorPackage
+from reyk.isolator_definition import CodeLocation, ContextDetectionConfig, VendorPackage
 
 
 FAKE_VENDOR_PACKAGE = VendorPackage(
@@ -26,7 +26,7 @@ FAKE_VENDOR_PACKAGE = VendorPackage(
 
 def test_get_caller() -> None:
     caller = get_caller_frame_outside_reyk()
-    assert caller.module_name == "tests.internals.test_internals"
+    assert next(caller.module_names.iter_all_names()) == "tests.internals.test_internals"
 
 
 @pytest.mark.parametrize(
@@ -45,12 +45,13 @@ def test_get_caller() -> None:
 def test_get_caller_matching_package_name(
     package_names: list[str],
     expected_output: Optional[str],
+    tmp_path: Path,
 ) -> None:
     as_vendor_packages = [
         VendorPackage(
             package_name=package_name,
-            package_directory=Path(__file__).parent,  # Fictive - only for testing package name logic
-            vendor_libs_path=Path(__file__).parent,
+            package_directory=tmp_path,
+            vendor_libs_path=tmp_path,
         )
         for package_name in package_names
     ]
@@ -87,10 +88,20 @@ def test_get_vendor_importer_install_and_uninstall_with_meta_path_manipulation()
     assert get_installed_reyk() is None
 
 
-def test_get_caller_vendor_package() -> None:
-    vendor_package = get_caller_vendor_package()
+def test_create_caller_vendor_package() -> None:
+    vendor_package = create_caller_vendor_package()
     assert vendor_package == VendorPackage(
         package_name="tests.internals",
         package_directory=Path(__file__).parent,
         vendor_libs_path=Path(__file__).parent / "libs",
     )
+
+
+def test_create_caller_vendor_package_with_context_detection() -> None:
+    context_detection = ContextDetectionConfig(
+        user_ignore_rules=(CodeLocation(module="external_proxy", function="forward"),)
+    )
+
+    vendor_package = create_caller_vendor_package(context_detection=context_detection)
+
+    assert vendor_package.context_detection is context_detection

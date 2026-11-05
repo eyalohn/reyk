@@ -3,6 +3,9 @@
 specific_libraries_test := tests/blackbox/specific_libraries
 specific_libraries_test_libs := $(specific_libraries_test)/test_libs
 
+.PHONY: uv install-hooks install install-test-libs update-test-libs \
+	test-library test-library-memray test-cli test testcov update-dependencies
+
 uv:
 	@uv -V || echo 'uv is not installed. Install via: https://docs.astral.sh/uv/getting-started/installation/'
 
@@ -15,7 +18,10 @@ install: uv
 install-test-libs: $(specific_libraries_test_libs)
 
 $(specific_libraries_test_libs):
-	CLI_PATH="$$(pwd)/reyk-cli"; \
+	$(MAKE) update-test-libs
+
+update-test-libs:
+	CLI_PATH="$(abspath reyk-cli)"; \
 	cd $(specific_libraries_test); \
 	uvx "$$CLI_PATH" sync
 
