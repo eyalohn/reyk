@@ -10,7 +10,6 @@ import pytest
 
 from reyk.isolator_definition import CodeLocation, ContextDetectionConfig
 from reyk.isolator import get_installed_reyk, uninstall_reyk
-from reyk.module_name_utils import ReykModuleNameExtractionError
 from tests.blackbox.test_distributions_finder import assert_distribution_names_subset
 from tests.blackbox.example_project_file_manager import ExampleProjectFileManager
 from tests.blackbox.libraries_manager import LibrariesManager
