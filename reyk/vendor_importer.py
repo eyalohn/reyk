@@ -12,15 +12,13 @@ from types import ModuleType
 from typing import Optional, Protocol
 
 from reyk.isolator_definition import ReykIsolator, ReykIsolatorFactory, VendorPackage, Version
-from reyk.module_name_utils import is_module_from_package
+from reyk.module_name_utils import is_module_from_package, is_relative_module_name
 from reyk.caller_finder import get_caller_matching_package_from_store
 from reyk.stdlib_finder import is_part_of_stdlib
 from reyk.vendor_packages_store import VendorPackagesStore
 from reyk.vendored_sys_modules import VendoredSysModules
 
 LOGGER = logging.getLogger(__name__)
-
-RELATIVE_IMPORT_PREFIX = "."
 
 
 class BuiltinsImporter(Protocol):
@@ -110,8 +108,10 @@ class VendorImporter(ReykIsolator, DistributionFinder):
         name: str,
         package: Optional[str] = None,
     ) -> ModuleType:
-        # If package is not None it's a relative import
-        is_relative_import = package is not None
+        # A relative import is only by the name - the package may be specified but only the name
+        # decides whether its relative.
+        # If the name is relative but package isn't specified importlib will raise an error.
+        is_relative_import = is_relative_module_name(name)
         vendor_package = self._get_package_to_vendor(import_name=name, is_relative_import=is_relative_import)
         if vendor_package is None:
             self._sys_modules_wrapper.remove_vendored_sys_modules()
