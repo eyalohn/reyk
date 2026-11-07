@@ -15,6 +15,7 @@ vendor-libs = [
     "boto3==1.42",
     "sqlalchemy==2.0.50",
     "confluent-kafka==2.14.0",
+    "setuptools==81.0.0",
 ]
 
 [tool.reyk]

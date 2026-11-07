@@ -6,14 +6,40 @@ between versions.
 
 from typing import Optional
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-
 
 DEFAULT_VENDOR_LIBS_IMPORT_PATH = "libs"
 
 
-@dataclass
+@dataclass(frozen=True)
+class CodeLocation:
+    """An exact declared or spec module name, optionally restricted to a function's definition name."""
+
+    module: str
+    function: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        if len(self.module) == 0 or (self.function is not None and len(self.function) == 0):
+            raise ValueError("Module and function names must not be empty")
+
+
+@dataclass(frozen=True)
+class ContextDetectionConfig:
+    """System and user rules to ignore locations when determining which package owns an operation."""
+
+    user_ignore_rules: tuple[CodeLocation, ...] = ()
+    system_ignore_rules: tuple[CodeLocation, ...] = field(
+        default=(CodeLocation(module="_virtualenv", function="find_spec"),),
+        init=False,
+    )
+
+    @property
+    def ignore(self) -> tuple[CodeLocation, ...]:
+        return self.system_ignore_rules + self.user_ignore_rules
+
+
+@dataclass(frozen=True)
 class VendorPackage:
     package_name: str
     """
@@ -29,8 +55,12 @@ class VendorPackage:
     """
     vendor_libs_import_name: Optional[str] = None
     """
-    The import name for the vendored libraries ie: `reyk.libs` or `libs`.
+    Import name for the vendored libraries ie: `reyk.libs` or `libs`.
     The default (if `None`) will be the `{package_name}.libs`.
+    """
+    context_detection: ContextDetectionConfig = field(default_factory=ContextDetectionConfig)
+    """
+    Code locations to ignore when detecting operations belonging to this package.
     """
 
     def __post_init__(self) -> None:
