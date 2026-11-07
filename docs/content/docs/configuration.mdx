@@ -39,8 +39,9 @@ def isolate_package(vendor_package: VendorPackage) -> None:
 - **vendor_libs_path** - Path to the vendor libs directory (importable by `vendor_libs_import_name`)
 - **vendor_libs_import_name** - Optionally specify the import name for the vendored libraries ie: `reyk.libs` or `libs`.
     The default (if `None`) will be the `{package_name}.libs`.
+- **context_detection** - Optional `ContextDetectionConfig` containing code locations to ignore for this package.
 
-You can create the vendor_package with get_caller_vendor_package() which will be generated based on your stacktrace
+You can create the vendor_package with create_caller_vendor_package() which will be generated based on your stacktrace
 (the caller package name and directory).
 
 ## Examples
@@ -48,9 +49,9 @@ You can create the vendor_package with get_caller_vendor_package() which will be
 Calling with all defaults - the common case:
 
 ```py
-from reyk.isolator import isolate_package, get_caller_vendor_package
+from reyk.isolator import isolate_package, create_caller_vendor_package
 
-isolate_package(get_caller_vendor_package())
+isolate_package(create_caller_vendor_package())
 ```
 
 Calling with a custom libs directory name:
@@ -67,6 +68,41 @@ isolate_package(VendorPackage(package_name="vendor", vendor_libs_path=Path(__fil
 [tool.reyk]
 libraries-path = "vendor"
 ```
+
+## Context detection
+
+Add rules through `ContextDetectionConfig.user_ignore_rules` to specify modules or functions
+Reyk should skip when determining whether an operation belongs to your package:
+
+```py
+from reyk.isolator_definition import CodeLocation, ContextDetectionConfig
+from reyk.isolator import create_caller_vendor_package, isolate_package
+
+package = create_caller_vendor_package(
+    context_detection=ContextDetectionConfig(
+        user_ignore_rules=(
+            CodeLocation(module="company.plugin_loader"),
+        ),
+    ),
+)
+isolate_package(package)
+```
+
+`VendorPackage` is frozen. Pass `context_detection` when constructing it or calling
+`create_caller_vendor_package()`, before registering it with `isolate_package()`.
+
+Module names match `__name__` or `__spec__.name` exactly; submodules are not included.
+File-path-derived names are used only for package ownership, not ignore rules.
+Omitting `function` matches all
+functions in that module. Function names are definition names such as `find_spec`, without
+the class prefix. Use `function="<module>"` to match module-level execution.
+
+Matching locations are skipped for that package, and detection continues to the caller. These rules apply
+to imports, `sys.modules` access, and distribution discovery. They also skip imports a
+matching function performs for its own dependencies, so select locations accordingly.
+
+Each package has its own configuration. A rule on one package does not allow another
+package to look past that location.
 
 ## Keeping both surfaces in sync
 
