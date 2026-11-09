@@ -37,6 +37,10 @@ def is_module_from_package(module_name: str, package_name: str) -> bool:
     return (module_name == package_name) or (module_name.startswith(f"{package_name}."))
 
 
+def is_relative_module_name(module_name: str) -> bool:
+    return module_name.startswith(_MODULE_PACKAGE_SEPARATOR)
+
+
 def calculate_package_tree(module_name: str) -> set[str]:
     """
     Returns all parents and module itself.
