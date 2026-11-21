@@ -51,3 +51,7 @@ For detailed documentation, examples, and API reference, visit the documentation
 ## Limitations
 
 - Multi-threaded applications are not supported.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, test commands, and implementation guidance.

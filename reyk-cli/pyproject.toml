@@ -23,3 +23,4 @@ reyk-cli = "reyk_cli.cli:app"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+tmp_path_retention_policy = "none"
